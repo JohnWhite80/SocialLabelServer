@@ -44,31 +44,41 @@ public class APIController {
 	@RequestMapping(value = "/register")	
 	public @ResponseBody ResponseEntity<Map<String, String>> registerUser(@RequestBody User user) {
 		User u = userService.addUser(user);
+		String userId = u.getId();
 		Map<String, String> result = new HashMap<String, String>();
-		result.put("id", u.getId());
+		result.put("code", "200");
+		result.put("message", "ok");
+		result.put("userId", userId);
+		result.put("sessionId", putUserIdToSession(userId));
 		return new ResponseEntity<Map<String, String>>(result, HttpStatus.OK);
 	}
 	
 	@RequestMapping(value = "/login")
-	public ResponseEntity<Map<String, String>> login(@RequestParam("email") String email, @RequestParam String password){
+	public ResponseEntity<Map<String, String>> login(@RequestParam("email") String email, @RequestParam("password") String password){
 		User user = userService.validate(email, password);
-		String sessionId = UUID.randomUUID().toString();
-		sessionMap.put(sessionId, user.getId());
+		String userId = user.getId();
 		Map<String, String> result = new HashMap<String, String>();
-		result.put("sessionId", sessionId);
+		result.put("code", "200");
+		result.put("message", "ok");
+		result.put("userId", userId);
+		result.put("sessionId", putUserIdToSession(userId));
 		return new ResponseEntity<Map<String, String>>(result, HttpStatus.OK);
 	}
 	
 	@RequestMapping(value = "/addtag")
-	public @ResponseBody ResponseEntity<String> addTag(@RequestParam("sessionId") String sessionId, @RequestBody List<Tag> tags){
+	public @ResponseBody ResponseEntity<Map<String, String>> addTag(@RequestParam("sessionId") String sessionId, @RequestBody List<Tag> tags){
 		String userId = getUseridBySessionId(sessionId);
 		userService.addtag(userId, tags);
-		return new ResponseEntity<String>("addtag success", HttpStatus.OK);
+		Map<String, String> result = new HashMap<String, String>();
+		result.put("code", "200");
+		result.put("message", "ok");
+		return new ResponseEntity<Map<String, String>>(result, HttpStatus.OK);
 	}
 	
 	@RequestMapping(value = "/recommend")
-	public @ResponseBody ResponseEntity<String> recommend(@RequestParam("email") String email){		
-		userService.recommend(email);
+	public @ResponseBody ResponseEntity<String> recommend(@RequestParam("sessionId") String sessionId){		
+		String userId = getUseridBySessionId(sessionId);
+		userService.recommend(userId);
 		return new ResponseEntity<String>("recommend success", HttpStatus.OK);
 	}
 	
@@ -79,15 +89,19 @@ public class APIController {
 	}
 	
 	@RequestMapping(value = "/profile", method = RequestMethod.POST,  produces = MediaType.APPLICATION_JSON_VALUE)
-	public @ResponseBody ResponseEntity<String> profile(@RequestParam("sessionId") String sessionId, @RequestParam("filename") String filename, @RequestPart("image") MultipartFile file,@RequestParam("birthday") String birthday,@RequestParam("sex") String sex,@RequestParam("city") String city) throws Exception {
+	public @ResponseBody ResponseEntity<Map<String, String>> profile(@RequestParam("sessionId") String sessionId, @RequestParam("filename") String filename, @RequestPart("image") MultipartFile file,@RequestParam("birthday") String birthday,@RequestParam("sex") String sex,@RequestParam("city") String city) throws Exception {
 		String userId = getUseridBySessionId(sessionId);
-		userService.updateProfile(userId, filename, file);
-		User u=new User();
-		u.setSex(sex);
-		u.setBirthday(birthday);
-		u.setCity(city);
-		userService.updateUser(u);
-		return new ResponseEntity<String>("update success", HttpStatus.OK);
+		userService.updateProfile(userId, birthday, city, sex, filename, file);		
+		Map<String, String> result = new HashMap<String, String>();
+		result.put("code", "200");
+		result.put("message", "ok");
+		return new ResponseEntity<Map<String, String>>(result, HttpStatus.OK);
+	}
+	
+	private String putUserIdToSession(String userId){
+		String sessionId = UUID.randomUUID().toString();
+		sessionMap.put(sessionId, userId);
+		return sessionId;
 	}
 	
 	private String getUseridBySessionId(String sessionId){
@@ -96,12 +110,15 @@ public class APIController {
 	}
 
 	@ExceptionHandler(Exception.class)
-	public @ResponseBody ResponseEntity<String> handleException(Exception e) {
+	public @ResponseBody ResponseEntity<Map<String, String>> handleException(Exception e) {
 		HttpStatus errorCode = HttpStatus.INTERNAL_SERVER_ERROR;
 		String errorMessage = e.getMessage();
 		if(e instanceof APIException) {
 			errorCode = HttpStatus.valueOf(((APIException)e).getErrorCode());
 		}
-		return new ResponseEntity<String>(errorMessage, errorCode);
+		Map<String, String> result = new HashMap<String, String>();
+		result.put("code", String.valueOf(errorCode));
+		result.put("message", errorMessage);
+		return new ResponseEntity<Map<String, String>>(result, errorCode);
 	}
 }

@@ -59,7 +59,7 @@ public class UserService {
 	}
 
 	@Transactional
-	public void updateProfile(String userId, String filename, MultipartFile file)
+	public void updateProfile(String userId, String birthday, String city, String sex, String filename, MultipartFile file)
 			throws Exception {
 		User user = userRepository.findOne(userId);
 		if (user == null) {
@@ -71,6 +71,9 @@ public class UserService {
 				+ "." + ext);
 		file.transferTo(f);		
 		user.setPicture(f.getAbsolutePath());
+		user.setBirthday(birthday);
+		user.setCity(city);
+		user.setSex(sex);
 		userRepository.saveAndFlush(user);
 	}
 
@@ -111,9 +114,9 @@ public class UserService {
 	}
 
 	@Transactional
-	public List<UserTag> recommend(String email) {
-		List<User> t = userRepository.findByEmail(email);
-		Set<UserTag> tag = t.get(0).getUserTags();
+	public List<UserTag> recommend(String userId) {
+		User t = userRepository.findOne(userId);
+		Set<UserTag> tag = t.getUserTags();
 		List<UserTag> rtback = new ArrayList<UserTag>();
 		Iterator<UserTag> it = tag.iterator();
 		while (it.hasNext()) {
