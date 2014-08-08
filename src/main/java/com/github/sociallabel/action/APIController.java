@@ -9,10 +9,12 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.FileSystemResource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -29,7 +31,7 @@ import com.github.sociallabel.entity.User;
 import com.github.sociallabel.service.UserService;
 
 @RestController
-@RequestMapping(value = "/api", produces = MediaType.APPLICATION_JSON_VALUE)
+@RequestMapping(value = "/api")
 public class APIController {
 	
 	private static final Logger logger = LoggerFactory.getLogger(APIController.class);
@@ -41,7 +43,7 @@ public class APIController {
 	
 	protected final RestTemplate template = new RestTemplate();
 	
-	@RequestMapping(value = "/register")	
+	@RequestMapping(value = "/register", produces = MediaType.APPLICATION_JSON_VALUE)	
 	public @ResponseBody ResponseEntity<Map<String, String>> registerUser(@RequestBody User user) {
 		User u = userService.addUser(user);
 		String userId = u.getId();
@@ -53,7 +55,7 @@ public class APIController {
 		return new ResponseEntity<Map<String, String>>(result, HttpStatus.OK);
 	}
 	
-	@RequestMapping(value = "/login")
+	@RequestMapping(value = "/login", produces = MediaType.APPLICATION_JSON_VALUE)
 	public ResponseEntity<Map<String, String>> login(@RequestParam("email") String email, @RequestParam("password") String password){
 		User user = userService.validate(email, password);
 		String userId = user.getId();
@@ -65,7 +67,7 @@ public class APIController {
 		return new ResponseEntity<Map<String, String>>(result, HttpStatus.OK);
 	}
 	
-	@RequestMapping(value = "/addtag")
+	@RequestMapping(value = "/addtag", produces = MediaType.APPLICATION_JSON_VALUE)
 	public @ResponseBody ResponseEntity<Map<String, String>> addTag(@RequestParam("sessionId") String sessionId, @RequestBody List<Tag> tags){
 		String userId = getUseridBySessionId(sessionId);
 		userService.addtag(userId, tags);
@@ -75,17 +77,26 @@ public class APIController {
 		return new ResponseEntity<Map<String, String>>(result, HttpStatus.OK);
 	}
 	
-	@RequestMapping(value = "/recommend")
-	public @ResponseBody ResponseEntity<String> recommend(@RequestParam("sessionId") String sessionId){		
+	@RequestMapping(value = "/recommend", produces = MediaType.APPLICATION_JSON_VALUE)
+	public @ResponseBody ResponseEntity<Map<String, Object>> recommend(@RequestParam("sessionId") String sessionId){		
 		String userId = getUseridBySessionId(sessionId);
-		userService.recommend(userId);
-		return new ResponseEntity<String>("recommend success", HttpStatus.OK);
+		List<Map> recommend = userService.recommend(userId);		
+		Map<String, Object> result = new HashMap<String, Object>();
+		result.put("code", "200");
+		result.put("message", "ok");
+		result.put("result", recommend);
+		return new ResponseEntity<Map<String, Object>>(result, HttpStatus.OK);
 	}
 	
-	@RequestMapping(value = "/search")
-	public @ResponseBody ResponseEntity<String> search(@RequestParam("tagname") String tagname){		
-		//userService.findByTagContaining(tagname);
-		return new ResponseEntity<String>("search success", HttpStatus.OK);
+	@RequestMapping(value = "/search", produces = MediaType.APPLICATION_JSON_VALUE)
+	public @ResponseBody ResponseEntity<Map<String, Object>> search(@RequestParam("sessionId") String sessionId, @RequestParam("tagname") String tagname){
+		String userId = getUseridBySessionId(sessionId);
+		List<Map> recommend = userService.recommendByTagName(userId, tagname);
+		Map<String, Object> result = new HashMap<String, Object>();
+		result.put("code", "200");
+		result.put("message", "ok");
+		result.put("result", recommend);
+		return new ResponseEntity<Map<String, Object>>(result, HttpStatus.OK);
 	}
 	
 	@RequestMapping(value = "/profile", method = RequestMethod.POST,  produces = MediaType.APPLICATION_JSON_VALUE)
@@ -96,6 +107,11 @@ public class APIController {
 		result.put("code", "200");
 		result.put("message", "ok");
 		return new ResponseEntity<Map<String, String>>(result, HttpStatus.OK);
+	}
+	
+	@RequestMapping(value = "/image/{filename:.+}", method = RequestMethod.GET)
+	public @ResponseBody FileSystemResource profile(@PathVariable String filename) throws Exception {
+		return new FileSystemResource(userService.getImage(filename)); 
 	}
 	
 	private String putUserIdToSession(String userId){
@@ -111,6 +127,7 @@ public class APIController {
 
 	@ExceptionHandler(Exception.class)
 	public @ResponseBody ResponseEntity<Map<String, String>> handleException(Exception e) {
+		logger.error("an exception occured", e);
 		HttpStatus errorCode = HttpStatus.INTERNAL_SERVER_ERROR;
 		String errorMessage = e.getMessage();
 		if(e instanceof APIException) {

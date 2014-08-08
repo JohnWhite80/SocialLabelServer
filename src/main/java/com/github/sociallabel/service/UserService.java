@@ -2,12 +2,15 @@ package com.github.sociallabel.service;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.querydsl.QPageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -70,7 +73,7 @@ public class UserService {
 		File f = new File(path + File.separator + System.currentTimeMillis()
 				+ "." + ext);
 		file.transferTo(f);		
-		user.setPicture(f.getAbsolutePath());
+		user.setPicture(f.getName());
 		user.setBirthday(birthday);
 		user.setCity(city);
 		user.setSex(sex);
@@ -112,18 +115,51 @@ public class UserService {
 			}
 		}
 	}
-
-	@Transactional
-	public List<UserTag> recommend(String userId) {
+	
+	public List<Map> recommend(String userId) {
+		List<Map> result = new ArrayList<Map>();				
 		User t = userRepository.findOne(userId);
-		Set<UserTag> tag = t.getUserTags();
-		List<UserTag> rtback = new ArrayList<UserTag>();
-		Iterator<UserTag> it = tag.iterator();
+		Set<UserTag> tags = t.getUserTags();
+		Iterator<UserTag> it = tags.iterator();
+		QPageRequest page = new QPageRequest(0, 5);
 		while (it.hasNext()) {
 			UserTag rt = it.next();
-			// String rtname=rt.getName();
-			rtback.add(rt);
+			String name = rt.getTag().getName();
+			List<Tag> names = tagRepository.findByNameLikeOrderByNameDesc(name, page);
+			for(Tag tag: names) {
+				List<UserTag> userTags = userTagRepository.findByTagId(tag.getId(), page);
+				if(!userTags.isEmpty()) {
+					Map map = new HashMap();
+					map.put("name", tag.getName());
+					map.put("userTags", userTags);
+					result.add(map);	
+				}				
+			}			
 		}
-		return rtback;
+		return result;
+	}
+	
+	public List<Map> recommendByTagName(String userId, String tagname) {
+		List<Map> result = new ArrayList<Map>();				
+		QPageRequest page = new QPageRequest(0, 5);
+		List<Tag> names = tagRepository.findByNameLikeOrderByNameDesc(tagname, page);
+		for(Tag tag: names) {
+			List<UserTag> userTags = userTagRepository.findByTagId(tag.getId(), page);
+			if(!userTags.isEmpty()) {
+				Map map = new HashMap();
+				map.put("name", tag.getName());
+				map.put("userTags", userTags);
+				result.add(map);	
+			}				
+		}
+		return result;
+	}
+
+	public File getImage(String filename) {
+		File f = new File(path + File.separator + filename);
+		if(!f.exists()) {
+			throw new APIException(404, "file not found");
+		}
+		return f;
 	}
 }
