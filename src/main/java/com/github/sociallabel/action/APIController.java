@@ -67,8 +67,8 @@ public class APIController {
 		return new ResponseEntity<Map<String, String>>(result, HttpStatus.OK);
 	}
 	
-	@RequestMapping(value = "/addtag", produces = MediaType.APPLICATION_JSON_VALUE)
-	public @ResponseBody ResponseEntity<Map<String, String>> addTag(@RequestParam("sessionId") String sessionId, @RequestBody List<Tag> tags){
+	@RequestMapping(value = "/addtag/{sessionId}", produces = MediaType.APPLICATION_JSON_VALUE)
+	public @ResponseBody ResponseEntity<Map<String, String>> addTag(@PathVariable("sessionId") String sessionId, @RequestBody List<Tag> tags){
 		String userId = getUseridBySessionId(sessionId);
 		userService.addtag(userId, tags);
 		Map<String, String> result = new HashMap<String, String>();
@@ -77,8 +77,8 @@ public class APIController {
 		return new ResponseEntity<Map<String, String>>(result, HttpStatus.OK);
 	}
 	
-	@RequestMapping(value = "/recommend", produces = MediaType.APPLICATION_JSON_VALUE)
-	public @ResponseBody ResponseEntity<Map<String, Object>> recommend(@RequestParam("sessionId") String sessionId){		
+	@RequestMapping(value = "/recommend/{sessionId}", produces = MediaType.APPLICATION_JSON_VALUE)
+	public @ResponseBody ResponseEntity<Map<String, Object>> recommend(@PathVariable("sessionId") String sessionId){		
 		String userId = getUseridBySessionId(sessionId);
 		List<Map> recommend = userService.recommend(userId);		
 		Map<String, Object> result = new HashMap<String, Object>();
@@ -88,8 +88,8 @@ public class APIController {
 		return new ResponseEntity<Map<String, Object>>(result, HttpStatus.OK);
 	}
 	
-	@RequestMapping(value = "/search", produces = MediaType.APPLICATION_JSON_VALUE)
-	public @ResponseBody ResponseEntity<Map<String, Object>> search(@RequestParam("sessionId") String sessionId, @RequestParam("tagname") String tagname){
+	@RequestMapping(value = "/search/{sessionId}", produces = MediaType.APPLICATION_JSON_VALUE)
+	public @ResponseBody ResponseEntity<Map<String, Object>> search(@PathVariable("sessionId") String sessionId, @RequestParam("tagname") String tagname){
 		String userId = getUseridBySessionId(sessionId);
 		List<Map> recommend = userService.recommendByTagName(userId, tagname);
 		Map<String, Object> result = new HashMap<String, Object>();
@@ -99,8 +99,8 @@ public class APIController {
 		return new ResponseEntity<Map<String, Object>>(result, HttpStatus.OK);
 	}
 	
-	@RequestMapping(value = "/profile", method = RequestMethod.POST,  produces = MediaType.APPLICATION_JSON_VALUE)
-	public @ResponseBody ResponseEntity<Map<String, String>> profile(@RequestParam("sessionId") String sessionId, @RequestParam("filename") String filename, @RequestPart("image") MultipartFile file,@RequestParam("birthday") String birthday,@RequestParam("sex") String sex,@RequestParam("city") String city) throws Exception {
+	@RequestMapping(value = "/profile/{sessionId}", method = RequestMethod.POST,  produces = MediaType.APPLICATION_JSON_VALUE)
+	public @ResponseBody ResponseEntity<Map<String, String>> profile(@PathVariable("sessionId") String sessionId, @RequestParam("filename") String filename, @RequestPart("image") MultipartFile file,@RequestParam("birthday") String birthday,@RequestParam("sex") String sex,@RequestParam("city") String city) throws Exception {
 		String userId = getUseridBySessionId(sessionId);
 		userService.updateProfile(userId, birthday, city, sex, filename, file);		
 		Map<String, String> result = new HashMap<String, String>();

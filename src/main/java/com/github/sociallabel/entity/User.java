@@ -46,6 +46,12 @@ public class User {
 
 	@OneToMany(targetEntity = com.github.sociallabel.entity.UserTag.class, cascade = CascadeType.REMOVE, mappedBy = "user")
 	private Set<UserTag> userTags = new HashSet<UserTag>();
+	
+	@OneToMany(targetEntity = com.github.sociallabel.entity.UserRelation.class, cascade = CascadeType.REMOVE, mappedBy = "sourceUser")
+	private Set<UserRelation> following = new HashSet<UserRelation>(); 
+	
+	@OneToMany(targetEntity = com.github.sociallabel.entity.UserRelation.class, cascade = CascadeType.REMOVE, mappedBy = "targetUser")
+	private Set<UserRelation> followers = new HashSet<UserRelation>(); 
 
 	public String getId() {
 		return id;
@@ -117,6 +123,22 @@ public class User {
 
 	public void setUserTags(Set<UserTag> userTags) {
 		this.userTags = userTags;
+	}
+
+	public Set<UserRelation> getFollowing() {
+		return following;
+	}
+
+	public void setFollowing(Set<UserRelation> following) {
+		this.following = following;
+	}
+
+	public Set<UserRelation> getFollowers() {
+		return followers;
+	}
+
+	public void setFollowers(Set<UserRelation> followers) {
+		this.followers = followers;
 	}
 
 

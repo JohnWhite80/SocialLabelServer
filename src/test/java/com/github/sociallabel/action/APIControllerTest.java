@@ -67,7 +67,7 @@ public class APIControllerTest {
 		this.mockMvc.perform(post("/api/register", user).contentType(MediaType.parseMediaType("application/json;charset=UTF-8")).content(jsonUser))
         .andExpect(status().isOk())
         .andExpect(content().contentType("application/json"))
-        .andExpect(jsonPath("$.id").exists());
+        .andExpect(jsonPath("$.userId").exists());
 	}
 	
 	@Test
@@ -81,7 +81,7 @@ public class APIControllerTest {
 		this.mockMvc.perform(post("/api/register").contentType(MediaType.parseMediaType("application/json;charset=UTF-8")).content(jsonUser))
         .andExpect(status().isOk())
         .andExpect(content().contentType("application/json"))
-        .andExpect(jsonPath("$.id").exists());
+        .andExpect(jsonPath("$.userId").exists());
 		
 		this.mockMvc.perform(get("/api/login", user).param("email", "2@2.com").param("password", "password"))
         .andExpect(status().isOk())
@@ -100,7 +100,7 @@ public class APIControllerTest {
 		this.mockMvc.perform(post("/api/register").contentType(MediaType.parseMediaType("application/json;charset=UTF-8")).content(jsonUser))
         .andExpect(status().isOk())
         .andExpect(content().contentType("application/json"))
-        .andExpect(jsonPath("$.id").exists());
+        .andExpect(jsonPath("$.userId").exists());
 		
 		MvcResult loginResult = this.mockMvc.perform(get("/api/login", user).param("email", "3@3.com").param("password", "password"))
         .andExpect(status().isOk())
@@ -118,7 +118,7 @@ public class APIControllerTest {
 		}
 		String jsonTags = mapper.writeValueAsString(tags);
 		
-		this.mockMvc.perform(post("/api/addtag", tags).param("sessionId", sessionId).contentType(MediaType.parseMediaType("application/json;charset=UTF-8")).content(jsonTags))
+		this.mockMvc.perform(post("/api/addtag/" + sessionId, tags).contentType(MediaType.parseMediaType("application/json;charset=UTF-8")).content(jsonTags))
         .andExpect(status().isOk())
         .andExpect(content().contentType("application/json"))
         .andExpect(content().string("addtag success"));		
