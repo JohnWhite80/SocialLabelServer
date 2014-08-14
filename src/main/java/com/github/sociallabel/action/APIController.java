@@ -28,6 +28,7 @@ import org.springframework.web.multipart.MultipartFile;
 import com.github.sociallabel.APIException;
 import com.github.sociallabel.entity.Tag;
 import com.github.sociallabel.entity.User;
+import com.github.sociallabel.entity.UserTag;
 import com.github.sociallabel.service.UserService;
 
 @RestController
@@ -67,6 +68,27 @@ public class APIController {
 		return new ResponseEntity<Map<String, String>>(result, HttpStatus.OK);
 	}
 	
+	@RequestMapping(value = "/internalLogin", produces = MediaType.APPLICATION_JSON_VALUE)
+	public ResponseEntity<Map<String, String>> internalLogin(@RequestParam("userId") String userId, @RequestParam("password") String password){
+		User user = userService.validateByUserId(userId, password);
+		Map<String, String> result = new HashMap<String, String>();
+		result.put("code", "200");
+		result.put("message", "ok");
+		result.put("userId", user.getId());
+		return new ResponseEntity<Map<String, String>>(result, HttpStatus.OK);
+	}
+	
+	@RequestMapping(value = "/internalRoom", produces = MediaType.APPLICATION_JSON_VALUE)
+	public ResponseEntity<Map<String, String>> internalRoom(@RequestParam("roomId") String roomId){
+		UserTag uTag = userService.findUserTagById(roomId);
+		Map<String, String> result = new HashMap<String, String>();
+		result.put("code", "200");
+		result.put("message", "ok");
+		result.put("ownerId", uTag.getUser().getId());
+		result.put("status", String.valueOf((uTag.getStatus())));
+		return new ResponseEntity<Map<String, String>>(result, HttpStatus.OK);
+	}
+	
 	@RequestMapping(value = "/addtag/{sessionId}", produces = MediaType.APPLICATION_JSON_VALUE)
 	public @ResponseBody ResponseEntity<Map<String, String>> addTag(@PathVariable("sessionId") String sessionId, @RequestBody List<Tag> tags){
 		String userId = getUseridBySessionId(sessionId);
@@ -103,6 +125,16 @@ public class APIController {
 	public @ResponseBody ResponseEntity<Map<String, String>> profile(@PathVariable("sessionId") String sessionId, @RequestParam("filename") String filename, @RequestPart("image") MultipartFile file,@RequestParam("birthday") String birthday,@RequestParam("sex") String sex,@RequestParam("city") String city) throws Exception {
 		String userId = getUseridBySessionId(sessionId);
 		userService.updateProfile(userId, birthday, city, sex, filename, file);		
+		Map<String, String> result = new HashMap<String, String>();
+		result.put("code", "200");
+		result.put("message", "ok");
+		return new ResponseEntity<Map<String, String>>(result, HttpStatus.OK);
+	}
+	
+	@RequestMapping(value = "/roomStatus/{sessionId}", produces = MediaType.APPLICATION_JSON_VALUE)
+	public ResponseEntity<Map<String, String>> setRoomStatus(@PathVariable("sessionId") String sessionId, @RequestParam("roomId") String roomId, @RequestParam("status") String status){
+		String userId = getUseridBySessionId(sessionId);
+		userService.setUserTagStatus(roomId, userId, status);
 		Map<String, String> result = new HashMap<String, String>();
 		result.put("code", "200");
 		result.put("message", "ok");

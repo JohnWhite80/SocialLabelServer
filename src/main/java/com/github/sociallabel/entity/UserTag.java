@@ -27,6 +27,9 @@ public class UserTag {
 	
 	@Column(columnDefinition="BIGINT default '0'")
 	private long peopleNumbers = 0;
+	
+	@Column(columnDefinition="BIGINT default '0'")
+	private String status = "0";
 
 	@ManyToOne(optional = false)
 	@JoinColumn(name = "USER_ID", nullable = false)
@@ -52,6 +55,14 @@ public class UserTag {
 
 	public void setPeopleNumbers(long peopleNumbers) {
 		this.peopleNumbers = peopleNumbers;
+	}
+
+	public String getStatus() {
+		return status;
+	}
+
+	public void setStatus(String status) {
+		this.status = status;
 	}
 
 	public String getSubject() {

@@ -92,6 +92,18 @@ public class UserService {
 		}
 		throw new APIException(400, "invalid user");
 	}
+	
+	public User validateByUserId(String userId, String password) {
+		if (userId != null && password != null) {
+			User user = userRepository.findOne(userId);
+			if (user != null) {
+				if(SecurityUtil.encrypt(password).equals(user.getPassword())){
+					return user;
+				}
+			}
+		}
+		throw new APIException(400, "invalid user");
+	}
 
 	@Transactional
 	public void addtag(String userId, List<Tag> tags) {
@@ -161,5 +173,27 @@ public class UserService {
 			throw new APIException(404, "file not found");
 		}
 		return f;
+	}
+
+	public UserTag findUserTagById(String id) {
+		UserTag result = userTagRepository.findOne(id);
+		if( result != null) {
+			return result;
+		}
+		throw new APIException(400, "invalid userTag");
+	}
+	
+	@Transactional
+	public UserTag setUserTagStatus(String id, String userId, String status) {
+		UserTag result = userTagRepository.findOne(id);
+		if( result != null) {
+			if(!result.getUser().getId().equals(userId)) {
+				throw new APIException(400, "permission denied");		
+			}
+			result.setStatus(status);
+			userTagRepository.saveAndFlush(result);
+			return result;
+		}
+		throw new APIException(400, "invalid userTag");
 	}
 }
