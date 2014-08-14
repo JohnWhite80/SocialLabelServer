@@ -196,4 +196,12 @@ public class UserService {
 		}
 		throw new APIException(400, "invalid userTag");
 	}
+
+	public User getProfile(String userId) {
+		User user = userRepository.findOne(userId);
+		if (user == null) {
+			throw new APIException(400, "user not exist");
+		}
+		return user;
+	}
 }

@@ -10,6 +10,7 @@ import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 
 import org.hibernate.annotations.GenericGenerator;
+import org.springframework.util.StringUtils;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
@@ -66,7 +67,11 @@ public class UserTag {
 	}
 
 	public String getSubject() {
-		return subject;
+		if(StringUtils.isEmpty(subject)){
+			return tag.getName();
+		} else {
+			return subject;	
+		}				
 	}
 
 	public void setSubject(String subject) {

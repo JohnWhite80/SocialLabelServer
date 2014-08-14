@@ -57,7 +57,7 @@ public class APIController {
 	}
 	
 	@RequestMapping(value = "/login", produces = MediaType.APPLICATION_JSON_VALUE)
-	public ResponseEntity<Map<String, String>> login(@RequestParam("email") String email, @RequestParam("password") String password){
+	public @ResponseBody ResponseEntity<Map<String, String>> login(@RequestParam("email") String email, @RequestParam("password") String password){
 		User user = userService.validate(email, password);
 		String userId = user.getId();
 		Map<String, String> result = new HashMap<String, String>();
@@ -69,7 +69,7 @@ public class APIController {
 	}
 	
 	@RequestMapping(value = "/internalLogin", produces = MediaType.APPLICATION_JSON_VALUE)
-	public ResponseEntity<Map<String, String>> internalLogin(@RequestParam("userId") String userId, @RequestParam("password") String password){
+	public @ResponseBody ResponseEntity<Map<String, String>> internalLogin(@RequestParam("userId") String userId, @RequestParam("password") String password){
 		User user = userService.validateByUserId(userId, password);
 		Map<String, String> result = new HashMap<String, String>();
 		result.put("code", "200");
@@ -79,7 +79,7 @@ public class APIController {
 	}
 	
 	@RequestMapping(value = "/internalRoom", produces = MediaType.APPLICATION_JSON_VALUE)
-	public ResponseEntity<Map<String, String>> internalRoom(@RequestParam("roomId") String roomId){
+	public @ResponseBody ResponseEntity<Map<String, String>> internalRoom(@RequestParam("roomId") String roomId){
 		UserTag uTag = userService.findUserTagById(roomId);
 		Map<String, String> result = new HashMap<String, String>();
 		result.put("code", "200");
@@ -122,7 +122,7 @@ public class APIController {
 	}
 	
 	@RequestMapping(value = "/profile/{sessionId}", method = RequestMethod.POST,  produces = MediaType.APPLICATION_JSON_VALUE)
-	public @ResponseBody ResponseEntity<Map<String, String>> profile(@PathVariable("sessionId") String sessionId, @RequestParam("filename") String filename, @RequestPart("image") MultipartFile file,@RequestParam("birthday") String birthday,@RequestParam("sex") String sex,@RequestParam("city") String city) throws Exception {
+	public @ResponseBody ResponseEntity<Map<String, String>> profileUpdate(@PathVariable("sessionId") String sessionId, @RequestParam("filename") String filename, @RequestPart("image") MultipartFile file,@RequestParam("birthday") String birthday,@RequestParam("sex") String sex,@RequestParam("city") String city) throws Exception {
 		String userId = getUseridBySessionId(sessionId);
 		userService.updateProfile(userId, birthday, city, sex, filename, file);		
 		Map<String, String> result = new HashMap<String, String>();
@@ -131,8 +131,19 @@ public class APIController {
 		return new ResponseEntity<Map<String, String>>(result, HttpStatus.OK);
 	}
 	
+	@RequestMapping(value = "/profile/{sessionId}", method = RequestMethod.GET,  produces = MediaType.APPLICATION_JSON_VALUE)
+	public @ResponseBody ResponseEntity<Map<String, Object>> profile(@PathVariable("sessionId") String sessionId) throws Exception {
+		String userId = getUseridBySessionId(sessionId);
+		User user = userService.getProfile(userId);		
+		Map<String, Object> result = new HashMap<String, Object>();
+		result.put("code", "200");
+		result.put("message", "ok");
+		result.put("user", user);
+		return new ResponseEntity<Map<String, Object>>(result, HttpStatus.OK);
+	}
+	
 	@RequestMapping(value = "/roomStatus/{sessionId}", produces = MediaType.APPLICATION_JSON_VALUE)
-	public ResponseEntity<Map<String, String>> setRoomStatus(@PathVariable("sessionId") String sessionId, @RequestParam("roomId") String roomId, @RequestParam("status") String status){
+	public @ResponseBody ResponseEntity<Map<String, String>> setRoomStatus(@PathVariable("sessionId") String sessionId, @RequestParam("roomId") String roomId, @RequestParam("status") String status){
 		String userId = getUseridBySessionId(sessionId);
 		userService.setUserTagStatus(roomId, userId, status);
 		Map<String, String> result = new HashMap<String, String>();
@@ -142,7 +153,7 @@ public class APIController {
 	}
 	
 	@RequestMapping(value = "/image/{filename:.+}", method = RequestMethod.GET)
-	public @ResponseBody FileSystemResource profile(@PathVariable String filename) throws Exception {
+	public @ResponseBody FileSystemResource image(@PathVariable String filename) throws Exception {
 		return new FileSystemResource(userService.getImage(filename)); 
 	}
 	

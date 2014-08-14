@@ -14,6 +14,8 @@ import javax.persistence.Table;
 
 import org.hibernate.annotations.GenericGenerator;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 @Entity
 @Table(name = "T_USER")
 public class User {
@@ -48,9 +50,11 @@ public class User {
 	private Set<UserTag> userTags = new HashSet<UserTag>();
 	
 	@OneToMany(targetEntity = com.github.sociallabel.entity.UserRelation.class, cascade = CascadeType.REMOVE, mappedBy = "sourceUser")
+	@JsonIgnore
 	private Set<UserRelation> following = new HashSet<UserRelation>(); 
 	
 	@OneToMany(targetEntity = com.github.sociallabel.entity.UserRelation.class, cascade = CascadeType.REMOVE, mappedBy = "targetUser")
+	@JsonIgnore
 	private Set<UserRelation> followers = new HashSet<UserRelation>(); 
 
 	public String getId() {
