@@ -131,9 +131,9 @@ public class APIController {
 		return new ResponseEntity<Map<String, String>>(result, HttpStatus.OK);
 	}
 	
-	@RequestMapping(value = "/profile/{sessionId}", method = RequestMethod.GET,  produces = MediaType.APPLICATION_JSON_VALUE)
-	public @ResponseBody ResponseEntity<Map<String, Object>> profile(@PathVariable("sessionId") String sessionId) throws Exception {
-		String userId = getUseridBySessionId(sessionId);
+	@RequestMapping(value = "/profile/{userId}/{sessionId}", method = RequestMethod.GET,  produces = MediaType.APPLICATION_JSON_VALUE)
+	public @ResponseBody ResponseEntity<Map<String, Object>> profile(@PathVariable("userId") String userId, @PathVariable("sessionId") String sessionId) throws Exception {
+		getUseridBySessionId(sessionId);
 		User user = userService.getProfile(userId);		
 		Map<String, Object> result = new HashMap<String, Object>();
 		result.put("code", "200");
@@ -165,6 +165,9 @@ public class APIController {
 	
 	private String getUseridBySessionId(String sessionId){
 		String userId = sessionMap.get(sessionId);
+		if(userId == null) {
+			throw new APIException(403, "invalid seesion");
+		}
 		return userId;
 	}
 

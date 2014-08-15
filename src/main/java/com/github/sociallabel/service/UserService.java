@@ -141,10 +141,15 @@ public class UserService {
 			for(Tag tag: names) {
 				List<UserTag> userTags = userTagRepository.findByTagId(tag.getId(), page);
 				if(!userTags.isEmpty()) {
-					Map map = new HashMap();
-					map.put("name", tag.getName());
-					map.put("userTags", userTags);
-					result.add(map);	
+					for(UserTag ut : userTags){
+						Map map = new HashMap();
+						map.put("id", ut.getId());
+						map.put("name", ut.getSubject());
+						map.put("image", ut.getUser().getPicture());
+						map.put("status", ut.getStatus());
+						result.add(map);
+					}
+						
 				}				
 			}			
 		}
