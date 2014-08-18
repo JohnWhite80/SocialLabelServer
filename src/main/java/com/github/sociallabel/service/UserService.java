@@ -141,15 +141,20 @@ public class UserService {
 			for(Tag tag: names) {
 				List<UserTag> userTags = userTagRepository.findByTagId(tag.getId(), page);
 				if(!userTags.isEmpty()) {
+					Map map  = new HashMap();
+					map.put("name", tag.getName());
+					List uts = new ArrayList();
 					for(UserTag ut : userTags){
-						Map map = new HashMap();
-						map.put("id", ut.getId());
-						map.put("name", ut.getSubject());
-						map.put("image", ut.getUser().getPicture());
-						map.put("status", ut.getStatus());
-						result.add(map);
+						Map m = new HashMap();
+						m.put("id", ut.getId());
+						m.put("name", ut.getSubject());
+						m.put("nickName", ut.getUser().getUsername());
+						m.put("image", ut.getUser().getPicture());
+						m.put("status", ut.getStatus());
+						uts.add(m);
 					}
-						
+					map.put("userTags", uts);
+					result.add(map);
 				}				
 			}			
 		}
@@ -165,7 +170,16 @@ public class UserService {
 			if(!userTags.isEmpty()) {
 				Map map = new HashMap();
 				map.put("name", tag.getName());
-				map.put("userTags", userTags);
+				List uts = new ArrayList();
+				for(UserTag ut : userTags){
+					Map m = new HashMap();
+					m.put("id", ut.getId());
+					m.put("name", ut.getSubject());
+					m.put("image", ut.getUser().getPicture());
+					m.put("status", ut.getStatus());
+					uts.add(map);
+				}
+				map.put("userTags", uts);
 				result.add(map);	
 			}				
 		}
