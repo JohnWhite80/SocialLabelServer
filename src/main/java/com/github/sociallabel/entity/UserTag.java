@@ -48,6 +48,7 @@ public class UserTag {
 	private Tag tag;
 	
 	@OneToMany(targetEntity = com.github.sociallabel.entity.UserTagSubject.class, cascade = CascadeType.REMOVE, mappedBy = "userTag")
+	@JsonIgnore
 	private Set<UserTagSubject> userTags = new HashSet<UserTagSubject>();
 
 	public String getId() {

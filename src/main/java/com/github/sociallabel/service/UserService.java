@@ -168,7 +168,7 @@ public class UserService {
 	public List<Map> recommendByTagName(String userId, String tagname) {
 		List<Map> result = new ArrayList<Map>();				
 		QPageRequest page = new QPageRequest(0, 5);
-		List<Tag> names = tagRepository.findByNameLikeOrderByNameDesc(tagname, page);
+		List<Tag> names = tagRepository.findByNameLikeOrderByNameDesc("%" + tagname + "%", page);
 		for(Tag tag: names) {
 			List<UserTag> userTags = userTagRepository.findByTagId(tag.getId(), page);
 			if(!userTags.isEmpty()) {
@@ -181,7 +181,7 @@ public class UserService {
 					m.put("name", ut.getSubject());
 					m.put("image", ut.getUser().getPicture());
 					m.put("status", ut.getStatus());
-					uts.add(map);
+					uts.add(m);
 				}
 				map.put("userTags", uts);
 				result.add(map);	
