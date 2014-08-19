@@ -64,6 +64,7 @@ public class APIController {
 		result.put("code", "200");
 		result.put("message", "ok");
 		result.put("userId", userId);
+		result.put("nickName", user.getUsername());
 		result.put("sessionId", putUserIdToSession(userId));
 		return new ResponseEntity<Map<String, String>>(result, HttpStatus.OK);
 	}
@@ -110,10 +111,10 @@ public class APIController {
 		return new ResponseEntity<Map<String, Object>>(result, HttpStatus.OK);
 	}
 	
-	@RequestMapping(value = "/search/{sessionId}", produces = MediaType.APPLICATION_JSON_VALUE)
-	public @ResponseBody ResponseEntity<Map<String, Object>> search(@PathVariable("sessionId") String sessionId, @RequestParam("tagname") String tagname){
+	@RequestMapping(value = "/search/{sessionId}/{tagName}", produces = MediaType.APPLICATION_JSON_VALUE)
+	public @ResponseBody ResponseEntity<Map<String, Object>> search(@PathVariable("sessionId") String sessionId, @PathVariable("tagName") String tagName){
 		String userId = getUseridBySessionId(sessionId);
-		List<Map> recommend = userService.recommendByTagName(userId, tagname);
+		List<Map> recommend = userService.recommendByTagName(userId, tagName);
 		Map<String, Object> result = new HashMap<String, Object>();
 		result.put("code", "200");
 		result.put("message", "ok");
@@ -143,9 +144,9 @@ public class APIController {
 	}
 	
 	@RequestMapping(value = "/roomStatus/{sessionId}", produces = MediaType.APPLICATION_JSON_VALUE)
-	public @ResponseBody ResponseEntity<Map<String, String>> setRoomStatus(@PathVariable("sessionId") String sessionId, @RequestParam("roomId") String roomId, @RequestParam("status") String status){
+	public @ResponseBody ResponseEntity<Map<String, String>> setRoomStatus(@PathVariable("sessionId") String sessionId, @RequestParam("roomId") String roomId, @RequestParam("status") String status,  @RequestParam(value = "subject", required = false) String subject){
 		String userId = getUseridBySessionId(sessionId);
-		userService.setUserTagStatus(roomId, userId, status);
+		userService.setUserTagStatus(roomId, userId, status, subject);
 		Map<String, String> result = new HashMap<String, String>();
 		result.put("code", "200");
 		result.put("message", "ok");

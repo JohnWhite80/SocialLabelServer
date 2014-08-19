@@ -19,9 +19,11 @@ import com.github.sociallabel.APIException;
 import com.github.sociallabel.entity.Tag;
 import com.github.sociallabel.entity.User;
 import com.github.sociallabel.entity.UserTag;
+import com.github.sociallabel.entity.UserTagSubject;
 import com.github.sociallabel.repository.TagRepository;
 import com.github.sociallabel.repository.UserRepository;
 import com.github.sociallabel.repository.UserTagRepository;
+import com.github.sociallabel.repository.UserTagSubjectRepository;
 import com.github.sociallabel.util.SecurityUtil;
 
 @Service("userService")
@@ -36,6 +38,8 @@ public class UserService {
 	private TagRepository tagRepository;
 	@Autowired
 	private UserTagRepository userTagRepository;
+	@Autowired
+	private UserTagSubjectRepository userTagSubjectRepository;
 
 	@Transactional
 	public User addUser(User u) {
@@ -203,14 +207,22 @@ public class UserService {
 	}
 	
 	@Transactional
-	public UserTag setUserTagStatus(String id, String userId, String status) {
+	public UserTag setUserTagStatus(String id, String userId, String status, String subject) {
 		UserTag result = userTagRepository.findOne(id);
 		if( result != null) {
 			if(!result.getUser().getId().equals(userId)) {
 				throw new APIException(400, "permission denied");		
 			}
+			if(subject != null && !"".equals(subject)) {
+				UserTagSubject entity = new UserTagSubject();
+				entity.setSubject(subject);
+				entity.setUserTag(result);
+				entity.setCreateDate(System.currentTimeMillis());
+				userTagSubjectRepository.save(entity);
+				result.setSubject(subject);
+			}
 			result.setStatus(status);
-			userTagRepository.saveAndFlush(result);
+			userTagRepository.save(result);
 			return result;
 		}
 		throw new APIException(400, "invalid userTag");

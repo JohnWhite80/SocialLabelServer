@@ -1,5 +1,9 @@
 package com.github.sociallabel.entity;
 
+import java.util.HashSet;
+import java.util.Set;
+
+import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
@@ -7,6 +11,7 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
+import javax.persistence.OneToMany;
 import javax.persistence.Table;
 
 import org.hibernate.annotations.GenericGenerator;
@@ -41,6 +46,9 @@ public class UserTag {
 	@JoinColumn(name = "TAG_ID", nullable = false)
 	@JsonIgnore
 	private Tag tag;
+	
+	@OneToMany(targetEntity = com.github.sociallabel.entity.UserTagSubject.class, cascade = CascadeType.REMOVE, mappedBy = "userTag")
+	private Set<UserTagSubject> userTags = new HashSet<UserTagSubject>();
 
 	public String getId() {
 		return id;
@@ -96,6 +104,14 @@ public class UserTag {
 	
 	public String getImage(){
 		return user.getPicture();
+	}
+
+	public Set<UserTagSubject> getUserTags() {
+		return userTags;
+	}
+
+	public void setUserTags(Set<UserTagSubject> userTags) {
+		this.userTags = userTags;
 	}
 
 }
