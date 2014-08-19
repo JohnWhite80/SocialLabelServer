@@ -18,9 +18,11 @@ import org.springframework.web.multipart.MultipartFile;
 import com.github.sociallabel.APIException;
 import com.github.sociallabel.entity.Tag;
 import com.github.sociallabel.entity.User;
+import com.github.sociallabel.entity.UserRelation;
 import com.github.sociallabel.entity.UserTag;
 import com.github.sociallabel.entity.UserTagSubject;
 import com.github.sociallabel.repository.TagRepository;
+import com.github.sociallabel.repository.UserRelationRepository;
 import com.github.sociallabel.repository.UserRepository;
 import com.github.sociallabel.repository.UserTagRepository;
 import com.github.sociallabel.repository.UserTagSubjectRepository;
@@ -31,13 +33,14 @@ public class UserService {
 
 	private @Value("${app.image.store.path}")
 	String path;
-
 	@Autowired
 	private UserRepository userRepository;
 	@Autowired
 	private TagRepository tagRepository;
 	@Autowired
 	private UserTagRepository userTagRepository;
+	@Autowired
+	private UserRelationRepository userRelationRepository;
 	@Autowired
 	private UserTagSubjectRepository userTagSubjectRepository;
 
@@ -234,5 +237,55 @@ public class UserService {
 			throw new APIException(400, "user not exist");
 		}
 		return user;
+	}
+
+	@Transactional
+	public void firendship(String userId, String targetId, String action) {
+		User user = userRepository.findOne(userId);
+		User target = userRepository.findOne(targetId);
+		if(user == null || target == null) {
+			throw new APIException(400, "user not exist");
+		}
+		List<UserRelation> relations = userRelationRepository.findBySourceIdAndTargetId(userId, targetId);
+		if("create".equals(action)) {
+			if(relations.isEmpty()) {
+				UserRelation ur = new UserRelation();
+				ur.setSourceUser(user);
+				ur.setTargetUser(target);
+				userRelationRepository.save(ur);
+			}
+		} else if("destroy".equals(action)) {
+			if(!relations.isEmpty()) {
+				userRelationRepository.delete(relations.get(0));
+			}
+		} else {
+			throw new APIException(400, "missed action type");
+		}
+	}
+
+	public List<Map<String, String>> firends(String userId) {
+		List<Map<String, String>> result = new ArrayList<Map<String, String>>();
+		List<User> friends = userRepository.findBySourceId(userId);
+		for(User u : friends) {
+			Map<String, String> map = new HashMap<String, String>();
+			map.put("userId", u.getId());
+			map.put("nickName", u.getUsername());
+			map.put("image", u.getPicture());
+			result.add(map);
+		}
+		return result;
+	}
+
+	public List<Map<String, String>> followers(String userId) {
+		List<Map<String, String>> result = new ArrayList<Map<String, String>>();
+		List<User> friends = userRepository.findByTagetId(userId);
+		for(User u : friends) {
+			Map<String, String> map = new HashMap<String, String>();
+			map.put("userId", u.getId());
+			map.put("nickName", u.getUsername());
+			map.put("image", u.getPicture());
+			result.add(map);
+		}
+		return result;
 	}
 }

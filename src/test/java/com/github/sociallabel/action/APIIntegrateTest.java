@@ -20,22 +20,27 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 
 public class APIIntegrateTest {
-		
-	public static <T> ResponseEntity<T> postJson(String url, Object data, Class<T> type,  Object... uriVariables){
-		RestTemplate template = new RestTemplate();
-	    template.getMessageConverters().add(new MappingJackson2HttpMessageConverter());
-		template.getMessageConverters().add(new StringHttpMessageConverter());						
-		return template.postForEntity(url, data, type, uriVariables);
-	}
 	
-	public static <T> ResponseEntity<T> postForm(String url, Object data, Class<T> type, Object... uriVariables){
-		RestTemplate template = new RestTemplate();
+	private final static RestTemplate jsonTemplate = new RestTemplate();
+	static {
+		jsonTemplate.getMessageConverters().add(new MappingJackson2HttpMessageConverter());
+		jsonTemplate.getMessageConverters().add(new StringHttpMessageConverter());
+	}
+	private final static RestTemplate formTemplate = new RestTemplate();
+	static {
 		FormHttpMessageConverter formConverter = new FormHttpMessageConverter();
 	    formConverter.setCharset(Charset.forName("UTF8"));
-	    template.getMessageConverters().add(formConverter);
-	    template.getMessageConverters().add(new MappingJackson2HttpMessageConverter());
-		template.getMessageConverters().add(new StringHttpMessageConverter());						
-		return template.postForEntity(url, data, type, uriVariables);
+	    formTemplate.getMessageConverters().add(formConverter);
+	    formTemplate.getMessageConverters().add(new MappingJackson2HttpMessageConverter());
+	    formTemplate.getMessageConverters().add(new StringHttpMessageConverter());
+	}
+		
+	public static <T> ResponseEntity<T> postJson(String url, Object data, Class<T> type,  Object... uriVariables){						
+		return jsonTemplate.postForEntity(url, data, type, uriVariables);
+	}
+	
+	public static <T> ResponseEntity<T> postForm(String url, Object data, Class<T> type, Object... uriVariables){						
+		return formTemplate.postForEntity(url, data, type, uriVariables);
 	}
 	
 	@Test

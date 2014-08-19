@@ -153,6 +153,38 @@ public class APIController {
 		return new ResponseEntity<Map<String, String>>(result, HttpStatus.OK);
 	}
 	
+	@RequestMapping(value = "/firendship/{sessionId}", produces = MediaType.APPLICATION_JSON_VALUE)
+	public @ResponseBody ResponseEntity<Map<String, String>> friendship(@PathVariable("sessionId") String sessionId, @RequestParam("targetId") String targetId, @RequestParam("action") String action){
+		String userId = getUseridBySessionId(sessionId);
+		userService.firendship(userId, targetId, action);
+		Map<String, String> result = new HashMap<String, String>();
+		result.put("code", "200");
+		result.put("message", "ok");
+		return new ResponseEntity<Map<String, String>>(result, HttpStatus.OK);
+	}
+	
+	@RequestMapping(value = "/firends/{sessionId}", produces = MediaType.APPLICATION_JSON_VALUE)
+	public @ResponseBody ResponseEntity<Map<String, Object>> friends(@PathVariable("sessionId") String sessionId, @RequestParam("userId") String userId){
+		getUseridBySessionId(sessionId);
+		List<Map<String, String>> firends = userService.firends(userId);
+		Map<String, Object> result = new HashMap<String, Object>();
+		result.put("code", "200");
+		result.put("message", "ok");
+		result.put("result", firends);
+		return new ResponseEntity<Map<String, Object>>(result, HttpStatus.OK);
+	}
+	
+	@RequestMapping(value = "/followers/{sessionId}", produces = MediaType.APPLICATION_JSON_VALUE)
+	public @ResponseBody ResponseEntity<Map<String, Object>> followers(@PathVariable("sessionId") String sessionId, @RequestParam("userId") String userId){
+		getUseridBySessionId(sessionId);
+		List<Map<String, String>> followers = userService.followers(userId);
+		Map<String, Object> result = new HashMap<String, Object>();
+		result.put("code", "200");
+		result.put("message", "ok");
+		result.put("result", followers);
+		return new ResponseEntity<Map<String, Object>>(result, HttpStatus.OK);
+	}
+	
 	@RequestMapping(value = "/image/{filename:.+}", method = RequestMethod.GET)
 	public @ResponseBody FileSystemResource image(@PathVariable String filename) throws Exception {
 		return new FileSystemResource(userService.getImage(filename)); 
