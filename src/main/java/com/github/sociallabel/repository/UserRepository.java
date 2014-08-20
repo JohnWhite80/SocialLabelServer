@@ -15,10 +15,10 @@ public interface UserRepository extends JpaRepository<User, String>{
 	
 	List<User> findByUsername(String username);
 	
-	@Query(" from User t where t.following.id = ?1 ")
+	@Query(" from User t inner join t.following as ur where ur.sourceUser.id = ?1 ")
 	List<User> findBySourceId(String userId);
 
-	@Query(" from User t where t.followers.id = ?1 ")
+	@Query(" from User t inner join t.following as ur where ur.targetUser.id = ?1 ")
 	List<User> findByTagetId(String userId);
 
 //	@SuppressWarnings("rawtypes")
