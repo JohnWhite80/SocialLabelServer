@@ -155,6 +155,7 @@ public class UserService {
 						Map m = new HashMap();
 						m.put("id", ut.getId());
 						m.put("name", ut.getSubject());
+						m.put("userId", ut.getUser().getId());
 						m.put("nickName", ut.getUser().getUsername());
 						m.put("image", ut.getUser().getPicture());
 						m.put("status", ut.getStatus());
@@ -182,6 +183,8 @@ public class UserService {
 					Map m = new HashMap();
 					m.put("id", ut.getId());
 					m.put("name", ut.getSubject());
+					m.put("userId", ut.getUser().getId());
+					m.put("nickName", ut.getUser().getUsername());
 					m.put("image", ut.getUser().getPicture());
 					m.put("status", ut.getStatus());
 					uts.add(m);
