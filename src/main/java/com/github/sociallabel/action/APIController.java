@@ -100,6 +100,16 @@ public class APIController {
 		return new ResponseEntity<Map<String, String>>(result, HttpStatus.OK);
 	}
 	
+	@RequestMapping(value = "/updateTag/{sessionId}", produces = MediaType.APPLICATION_JSON_VALUE)
+	public @ResponseBody ResponseEntity<Map<String, String>> updateTag(@PathVariable("sessionId") String sessionId, @RequestParam("userTagId") String userTagId, @RequestParam("tagName") String tagName){
+		String userId = getUseridBySessionId(sessionId);
+		userService.updateUserTag(userTagId, userId, tagName);
+		Map<String, String> result = new HashMap<String, String>();
+		result.put("code", "200");
+		result.put("message", "ok");
+		return new ResponseEntity<Map<String, String>>(result, HttpStatus.OK);
+	}
+	
 	@RequestMapping(value = "/recommend/{sessionId}", produces = MediaType.APPLICATION_JSON_VALUE)
 	public @ResponseBody ResponseEntity<Map<String, Object>> recommend(@PathVariable("sessionId") String sessionId){		
 		String userId = getUseridBySessionId(sessionId);

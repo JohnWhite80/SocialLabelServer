@@ -245,7 +245,7 @@ public class UserService {
 	@Transactional
 	public void firendship(String userId, String targetId, String action) {
 		User user = userRepository.findOne(userId);
-		User target = userRepository.findOne(targetId);
+		UserTag target = userTagRepository.findOne(targetId);
 		if(user == null || target == null) {
 			throw new APIException(400, "user not exist");
 		}
@@ -254,7 +254,7 @@ public class UserService {
 			if(relations.isEmpty()) {
 				UserRelation ur = new UserRelation();
 				ur.setSourceUser(user);
-				ur.setTargetUser(target);
+				ur.setTargetUser(target.getUser());
 				userRelationRepository.save(ur);
 			}
 		} else if("destroy".equals(action)) {
@@ -290,5 +290,28 @@ public class UserService {
 			result.add(map);
 		}
 		return result;
+	}
+	
+	@Transactional
+	public void updateUserTag(String id, String userId, String tagName){
+		UserTag result = userTagRepository.findOne(id);
+		if( result != null) {
+			if(!result.getUser().getId().equals(userId)) {
+				throw new APIException(400, "permission denied");		
+			}
+			List<Tag> tagList = tagRepository.findByName(tagName);
+			Tag tag = null;			
+			if (tagList.isEmpty()) {
+				tag = new Tag();
+				tag.setName(tagName);
+				tag = tagRepository.save(tag);
+			} else {
+				tag = tagList.get(0);
+			}
+			result.setTag(tag);
+			userTagRepository.save(result);
+			return;
+		}
+		throw new APIException(400, "invalid userTag");
 	}
 }
