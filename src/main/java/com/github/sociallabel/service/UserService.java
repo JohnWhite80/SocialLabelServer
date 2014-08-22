@@ -140,13 +140,14 @@ public class UserService {
 		User t = userRepository.findOne(userId);
 		Set<UserTag> tags = t.getUserTags();
 		Iterator<UserTag> it = tags.iterator();
-		QPageRequest page = new QPageRequest(0, 5);
+		QPageRequest pageTag = new QPageRequest(0, 5);
+		QPageRequest pageUserTag = new QPageRequest(0, 2);
 		while (it.hasNext()) {
 			UserTag rt = it.next();
 			String name = rt.getTag().getName();
-			List<Tag> names = tagRepository.findByNameLikeOrderByNameDesc(name, page);
+			List<Tag> names = tagRepository.findByNameLikeOrderByNameDesc(name, pageTag);
 			for(Tag tag: names) {
-				List<UserTag> userTags = userTagRepository.findByTagId(tag.getId(), page);
+				List<UserTag> userTags = userTagRepository.findByTagId(tag.getId(), pageUserTag);
 				if(!userTags.isEmpty()) {
 					Map map  = new HashMap();
 					map.put("name", tag.getName());
@@ -171,10 +172,11 @@ public class UserService {
 	
 	public List<Map> recommendByTagName(String userId, String tagname) {
 		List<Map> result = new ArrayList<Map>();				
-		QPageRequest page = new QPageRequest(0, 5);
-		List<Tag> names = tagRepository.findByNameLikeOrderByNameDesc("%" + tagname + "%", page);
+		QPageRequest pageTag = new QPageRequest(0, 5);
+		QPageRequest pageUserTag = new QPageRequest(0, 2);
+		List<Tag> names = tagRepository.findByNameLikeOrderByNameDesc("%" + tagname + "%", pageTag);
 		for(Tag tag: names) {
-			List<UserTag> userTags = userTagRepository.findByTagId(tag.getId(), page);
+			List<UserTag> userTags = userTagRepository.findByTagId(tag.getId(), pageUserTag);
 			if(!userTags.isEmpty()) {
 				Map map = new HashMap();
 				map.put("name", tag.getName());
@@ -234,12 +236,33 @@ public class UserService {
 		throw new APIException(400, "invalid userTag");
 	}
 
-	public User getProfile(String userId) {
+	public Map getProfile(String userId) {
 		User user = userRepository.findOne(userId);
 		if (user == null) {
 			throw new APIException(400, "user not exist");
 		}
-		return user;
+		Map result = new HashMap();
+		result.put("id", user.getId());
+		result.put("nickName", user.getUsername());
+		result.put("image", user.getPicture());
+		result.put("sex", user.getSex());
+		result.put("birthday", user.getBirthday());
+		result.put("city", user.getCity());
+		Set<UserTag> userTags = user.getUserTags();
+		List uts = new ArrayList();
+		for(UserTag ut : userTags){
+			Map m = new HashMap();
+			m.put("id", ut.getId());			
+			m.put("name", ut.getSubject());
+			m.put("tagName", ut.getTag().getName());
+			m.put("userId", ut.getUser().getId());
+			m.put("nickName", ut.getUser().getUsername());
+			m.put("image", ut.getUser().getPicture());
+			m.put("status", ut.getStatus());
+			uts.add(m);
+		}
+		result.put("userTags", uts);
+		return result;
 	}
 
 	@Transactional
@@ -310,6 +333,17 @@ public class UserService {
 			}
 			result.setTag(tag);
 			userTagRepository.save(result);
+			return;
+		}
+		throw new APIException(400, "invalid userTag");
+	}
+
+	@Transactional
+	public void countRoom(String roomId) {
+		UserTag result = userTagRepository.findOne(roomId);
+		if( result != null) {
+			result.setPeopleNumbers(result.getPeopleNumbers() + 1);
+			userTagRepository.saveAndFlush(result);
 			return;
 		}
 		throw new APIException(400, "invalid userTag");

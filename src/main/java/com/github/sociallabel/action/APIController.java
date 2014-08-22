@@ -90,6 +90,15 @@ public class APIController {
 		return new ResponseEntity<Map<String, String>>(result, HttpStatus.OK);
 	}
 	
+	@RequestMapping(value = "internalCountRoom/{roomId}", produces = MediaType.APPLICATION_JSON_VALUE)
+	public @ResponseBody ResponseEntity<Map<String, String>> internalCountRoom(@PathVariable("roomId") String roomId){
+		userService.countRoom(roomId);
+		Map<String, String> result = new HashMap<String, String>();
+		result.put("code", "200");
+		result.put("message", "ok");
+		return new ResponseEntity<Map<String, String>>(result, HttpStatus.OK);
+	}	
+	
 	@RequestMapping(value = "/addtag/{sessionId}", produces = MediaType.APPLICATION_JSON_VALUE)
 	public @ResponseBody ResponseEntity<Map<String, String>> addTag(@PathVariable("sessionId") String sessionId, @RequestBody List<Tag> tags){
 		String userId = getUseridBySessionId(sessionId);
@@ -145,11 +154,11 @@ public class APIController {
 	@RequestMapping(value = "/profile/{userId}/{sessionId}", method = RequestMethod.GET,  produces = MediaType.APPLICATION_JSON_VALUE)
 	public @ResponseBody ResponseEntity<Map<String, Object>> profile(@PathVariable("userId") String userId, @PathVariable("sessionId") String sessionId) throws Exception {
 		getUseridBySessionId(sessionId);
-		User user = userService.getProfile(userId);		
+		Map user = userService.getProfile(userId);		
 		Map<String, Object> result = new HashMap<String, Object>();
 		result.put("code", "200");
 		result.put("message", "ok");
-		result.put("user", user);
+		result.put("result", user);
 		return new ResponseEntity<Map<String, Object>>(result, HttpStatus.OK);
 	}
 	
