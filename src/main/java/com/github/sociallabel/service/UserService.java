@@ -291,12 +291,16 @@ public class UserService {
 
 	public List<Map<String, String>> firends(String userId) {
 		List<Map<String, String>> result = new ArrayList<Map<String, String>>();
-		List<User> friends = userRepository.findBySourceId(userId);
-		for(User u : friends) {
+		User user = userRepository.findOne(userId);
+		if (user == null) {
+			throw new APIException(400, "user not exist");
+		}
+		Set<UserRelation> friends = user.getFollowing();
+		for(UserRelation u : friends) {
 			Map<String, String> map = new HashMap<String, String>();
-			map.put("userId", u.getId());
-			map.put("nickName", u.getUsername());
-			map.put("image", u.getPicture());
+			map.put("userId", u.getTargetUser().getId());
+			map.put("nickName", u.getTargetUser().getUsername());
+			map.put("image", u.getTargetUser().getPicture());
 			result.add(map);
 		}
 		return result;
@@ -304,12 +308,16 @@ public class UserService {
 
 	public List<Map<String, String>> followers(String userId) {
 		List<Map<String, String>> result = new ArrayList<Map<String, String>>();
-		List<User> friends = userRepository.findByTagetId(userId);
-		for(User u : friends) {
+		User user = userRepository.findOne(userId);
+		if (user == null) {
+			throw new APIException(400, "user not exist");
+		}
+		Set<UserRelation> followers = user.getFollowers();
+		for(UserRelation u : followers) {
 			Map<String, String> map = new HashMap<String, String>();
-			map.put("userId", u.getId());
-			map.put("nickName", u.getUsername());
-			map.put("image", u.getPicture());
+			map.put("userId", u.getSourceUser().getId());
+			map.put("nickName", u.getSourceUser().getUsername());
+			map.put("image", u.getSourceUser().getPicture());
 			result.add(map);
 		}
 		return result;
