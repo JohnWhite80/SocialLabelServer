@@ -368,9 +368,12 @@ public class UserService {
 		List<User> users = userRepository.findAll(ids);
 		for(User u : users) {
 			Map<String, String> map = new HashMap<String, String>();
-			map.put("userId", u.getId());
+			map.put("id", u.getId());
 			map.put("nickName", u.getUsername());
-			map.put("image", u.getPicture());
+			map.put("image", u.getPicture());			
+			map.put("sex", u.getSex());
+			map.put("birthday", u.getBirthday());
+			map.put("city", u.getCity());
 			result.add(map);
 		}
 		return result;
