@@ -2,6 +2,7 @@ package com.github.sociallabel.service;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -355,5 +356,23 @@ public class UserService {
 			return;
 		}
 		throw new APIException(400, "invalid userTag");
+	}
+
+	public List<Map<String, String>> lookupUsers(String userId) {
+		List<Map<String, String>> result = new ArrayList<Map<String, String>>();
+		if (userId == null || "".equals(userId)) {
+			throw new APIException(400, "bad request");
+		}
+		String[] userIds = userId.split(",");
+		List<String> ids = Arrays.asList(userIds);
+		List<User> users = userRepository.findAll(ids);
+		for(User u : users) {
+			Map<String, String> map = new HashMap<String, String>();
+			map.put("userId", u.getId());
+			map.put("nickName", u.getUsername());
+			map.put("image", u.getPicture());
+			result.add(map);
+		}
+		return result;
 	}
 }

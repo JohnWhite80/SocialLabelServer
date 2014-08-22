@@ -204,6 +204,17 @@ public class APIController {
 		return new ResponseEntity<Map<String, Object>>(result, HttpStatus.OK);
 	}
 	
+	@RequestMapping(value = "/lookupUsers/{sessionId}", produces = MediaType.APPLICATION_JSON_VALUE)
+	public @ResponseBody ResponseEntity<Map<String, Object>> lookupUsers(@PathVariable("sessionId") String sessionId, @RequestParam("userId") String userId){
+		getUseridBySessionId(sessionId);
+		List<Map<String, String>> users = userService.lookupUsers(userId);
+		Map<String, Object> result = new HashMap<String, Object>();
+		result.put("code", "200");
+		result.put("message", "ok");
+		result.put("result", users);
+		return new ResponseEntity<Map<String, Object>>(result, HttpStatus.OK);
+	}
+	
 	@RequestMapping(value = "/image/{filename:.+}", method = RequestMethod.GET)
 	public @ResponseBody FileSystemResource image(@PathVariable String filename) throws Exception {
 		return new FileSystemResource(userService.getImage(filename)); 
