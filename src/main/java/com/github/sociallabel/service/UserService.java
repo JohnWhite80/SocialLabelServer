@@ -3,12 +3,14 @@ package com.github.sociallabel.service;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.querydsl.QPageRequest;
@@ -278,7 +280,7 @@ public class UserService {
 			if(relations.isEmpty()) {
 				UserRelation ur = new UserRelation();
 				ur.setSourceUser(user);
-				ur.setTargetUser(target.getUser());
+				ur.setTargetUserTag(target);
 				userRelationRepository.save(ur);
 			}
 		} else if("destroy".equals(action)) {
@@ -299,29 +301,36 @@ public class UserService {
 		Set<UserRelation> friends = user.getFollowing();
 		for(UserRelation u : friends) {
 			Map<String, String> map = new HashMap<String, String>();
-			map.put("userId", u.getTargetUser().getId());
-			map.put("nickName", u.getTargetUser().getUsername());
-			map.put("image", u.getTargetUser().getPicture());
+			User taget = u.getTargetUserTag().getUser();
+			map.put("userId", taget.getId());
+			map.put("nickName", taget.getUsername());
+			map.put("image", taget.getPicture());
 			result.add(map);
 		}
 		return result;
 	}
 
-	public List<Map<String, String>> followers(String userId) {
-		List<Map<String, String>> result = new ArrayList<Map<String, String>>();
+	public Collection<Map<String, String>> followers(String userId) {
+		Map<String, Map<String, String>> result = new HashMap<String, Map<String, String>>();
 		User user = userRepository.findOne(userId);
 		if (user == null) {
 			throw new APIException(400, "user not exist");
 		}
-		Set<UserRelation> followers = user.getFollowers();
-		for(UserRelation u : followers) {
-			Map<String, String> map = new HashMap<String, String>();
-			map.put("userId", u.getSourceUser().getId());
-			map.put("nickName", u.getSourceUser().getUsername());
-			map.put("image", u.getSourceUser().getPicture());
-			result.add(map);
+		Set<UserTag> userTags = user.getUserTags();
+		for(UserTag ut: userTags){
+			Set<UserRelation> followers = ut.getFollowers();
+			for(UserRelation ur: followers) {
+				User u = ur.getSourceUser();
+				if(!result.containsKey(u.getId())) {
+					Map<String, String> map = new HashMap<String, String>();				
+					map.put("userId", u.getId());
+					map.put("nickName", u.getUsername());
+					map.put("image", u.getPicture());
+					result.put(u.getId(), map);	
+				}					
+			}			
 		}
-		return result;
+		return result.values();
 	}
 	
 	@Transactional
@@ -374,8 +383,43 @@ public class UserService {
 			map.put("sex", u.getSex());
 			map.put("birthday", u.getBirthday());
 			map.put("city", u.getCity());
+			map.put("userTags", getUserTagsAsString(u));
 			result.add(map);
 		}
+		return result;
+	}
+
+	private String getUserTagsAsString(User u) {
+		List<String> tags = new ArrayList<String>();
+		Set<UserTag> userTags = u.getUserTags();
+		for(UserTag ut: userTags) {
+			tags.add(ut.getTag().getName());
+		}
+		
+		return StringUtils.join(tags, ",");
+	}
+
+	public Map getRoom(String roomId) {
+		UserTag ut = userTagRepository.findOne(roomId);
+		if (ut == null) {
+			throw new APIException(400, "room not exist");
+		}
+		Map result = new HashMap();
+		User user = ut.getUser();
+		result.put("id", ut.getId());			
+		result.put("name", ut.getSubject());
+		result.put("tagName", ut.getTag().getName());
+		result.put("userId", ut.getUser().getId());
+		result.put("nickName", ut.getUser().getUsername());
+		result.put("image", ut.getUser().getPicture());
+		result.put("status", ut.getStatus());
+		Set<UserTag> userTags = user.getUserTags();
+		List<String> uts = new ArrayList<String>();
+		Set<UserTagSubject> userTagSubjects = ut.getUserTagSubjects();
+		for(UserTagSubject s : userTagSubjects){			
+			uts.add(s.getSubject());
+		}
+		result.put("historySubjects", uts);
 		return result;
 	}
 }

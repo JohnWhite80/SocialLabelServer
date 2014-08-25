@@ -27,9 +27,9 @@ public class UserRelation {
 	private User sourceUser;
 	
 	@ManyToOne(optional = false)
-	@JoinColumn(name = "TARGET_USER_ID", nullable = false)
+	@JoinColumn(name = "TARGET_USERTAG_ID", nullable = false)
 	@JsonIgnore
-	private User targetUser;
+	private UserTag targetUserTag;
 
 	public String getId() {
 		return id;
@@ -47,12 +47,12 @@ public class UserRelation {
 		this.sourceUser = sourceUser;
 	}
 
-	public User getTargetUser() {
-		return targetUser;
+	public UserTag getTargetUserTag() {
+		return targetUserTag;
 	}
 
-	public void setTargetUser(User targetUser) {
-		this.targetUser = targetUser;
+	public void setTargetUserTag(UserTag targetUserTag) {
+		this.targetUserTag = targetUserTag;
 	}
 
 }

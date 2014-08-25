@@ -10,7 +10,7 @@ import com.github.sociallabel.entity.UserRelation;
 
 public interface UserRelationRepository extends JpaRepository<UserRelation, String>{
 	
-	@Query(" from UserRelation t where t.sourceUser.id = ?1 and t.targetUser.id=?2 ")
+	@Query(" from UserRelation t where t.sourceUser.id = ?1 and t.targetUserTag.id=?2 ")
 	List<UserRelation> findBySourceIdAndTargetId(String souceId, String targetId);
 
 	@Query(" from UserRelation t where t.sourceUser.id = ?1 ")

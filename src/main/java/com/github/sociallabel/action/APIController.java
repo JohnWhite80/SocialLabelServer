@@ -1,5 +1,6 @@
 package com.github.sociallabel.action;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -172,6 +173,17 @@ public class APIController {
 		return new ResponseEntity<Map<String, String>>(result, HttpStatus.OK);
 	}
 	
+	@RequestMapping(value = "/room/{sessionId}", produces = MediaType.APPLICATION_JSON_VALUE)
+	public @ResponseBody ResponseEntity<Map<String, Object>> room(@PathVariable("sessionId") String sessionId, @RequestParam("roomId") String roomId){
+		String userId = getUseridBySessionId(sessionId);
+		Map room = userService.getRoom(roomId);
+		Map<String, Object> result = new HashMap<String, Object>();
+		result.put("code", "200");
+		result.put("message", "ok");
+		result.put("result", room);
+		return new ResponseEntity<Map<String, Object>>(result, HttpStatus.OK);
+	}
+	
 	@RequestMapping(value = "/firendship/{sessionId}", produces = MediaType.APPLICATION_JSON_VALUE)
 	public @ResponseBody ResponseEntity<Map<String, String>> friendship(@PathVariable("sessionId") String sessionId, @RequestParam("targetId") String targetId, @RequestParam("action") String action){
 		String userId = getUseridBySessionId(sessionId);
@@ -196,7 +208,7 @@ public class APIController {
 	@RequestMapping(value = "/followers/{sessionId}", produces = MediaType.APPLICATION_JSON_VALUE)
 	public @ResponseBody ResponseEntity<Map<String, Object>> followers(@PathVariable("sessionId") String sessionId, @RequestParam("userId") String userId){
 		getUseridBySessionId(sessionId);
-		List<Map<String, String>> followers = userService.followers(userId);
+		Collection<Map<String, String>> followers = userService.followers(userId);
 		Map<String, Object> result = new HashMap<String, Object>();
 		result.put("code", "200");
 		result.put("message", "ok");
