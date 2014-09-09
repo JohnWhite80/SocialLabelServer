@@ -154,8 +154,8 @@ public class APIController {
 	
 	@RequestMapping(value = "/profile/{userId}/{sessionId}", method = RequestMethod.GET,  produces = MediaType.APPLICATION_JSON_VALUE)
 	public @ResponseBody ResponseEntity<Map<String, Object>> profile(@PathVariable("userId") String userId, @PathVariable("sessionId") String sessionId) throws Exception {
-		getUseridBySessionId(sessionId);
-		Map user = userService.getProfile(userId);		
+		String sourceUserId = getUseridBySessionId(sessionId);
+		Map user = userService.getProfile(sourceUserId, userId);		
 		Map<String, Object> result = new HashMap<String, Object>();
 		result.put("code", "200");
 		result.put("message", "ok");
@@ -220,6 +220,17 @@ public class APIController {
 	public @ResponseBody ResponseEntity<Map<String, Object>> lookupUsers(@PathVariable("sessionId") String sessionId, @RequestParam("userId") String userId){
 		getUseridBySessionId(sessionId);
 		List<Map<String, String>> users = userService.lookupUsers(userId);
+		Map<String, Object> result = new HashMap<String, Object>();
+		result.put("code", "200");
+		result.put("message", "ok");
+		result.put("result", users);
+		return new ResponseEntity<Map<String, Object>>(result, HttpStatus.OK);
+	}
+	
+	@RequestMapping(value = "/lookupUsersByNickname/{sessionId}", produces = MediaType.APPLICATION_JSON_VALUE)
+	public @ResponseBody ResponseEntity<Map<String, Object>> lookupUsersByNickname(@PathVariable("sessionId") String sessionId, @RequestParam("nickName") String nickName){
+		getUseridBySessionId(sessionId);
+		List<Map<String, String>> users = userService.lookupUsersByNickname(nickName);
 		Map<String, Object> result = new HashMap<String, Object>();
 		result.put("code", "200");
 		result.put("message", "ok");

@@ -5,14 +5,22 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Path;
+import javax.persistence.criteria.Predicate;
+import javax.persistence.criteria.Root;
+
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.querydsl.QPageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -239,19 +247,22 @@ public class UserService {
 		throw new APIException(400, "invalid userTag");
 	}
 
-	public Map getProfile(String userId) {
-		User user = userRepository.findOne(userId);
-		if (user == null) {
+	public Map getProfile(String souceUserId, String destUserId) {
+		User souceUser = userRepository.findOne(souceUserId);
+		User destUser = userRepository.findOne(destUserId);
+		if (souceUser == null || destUser == null) {
 			throw new APIException(400, "user not exist");
 		}
+		List<UserRelation> relations = userRelationRepository.findBySourceIdAndTargetId(souceUserId, destUserId);
+		Set<UserTag> relation = convert(relations);
 		Map result = new HashMap();
-		result.put("id", user.getId());
-		result.put("nickName", user.getUsername());
-		result.put("image", user.getPicture());
-		result.put("sex", user.getSex());
-		result.put("birthday", user.getBirthday());
-		result.put("city", user.getCity());
-		Set<UserTag> userTags = user.getUserTags();
+		result.put("id", destUser.getId());
+		result.put("nickName", destUser.getUsername());
+		result.put("image", destUser.getPicture());
+		result.put("sex", destUser.getSex());
+		result.put("birthday", destUser.getBirthday());
+		result.put("city", destUser.getCity());
+		Set<UserTag> userTags = destUser.getUserTags();
 		List uts = new ArrayList();
 		for(UserTag ut : userTags){
 			Map m = new HashMap();
@@ -262,9 +273,22 @@ public class UserService {
 			m.put("nickName", ut.getUser().getUsername());
 			m.put("image", ut.getUser().getPicture());
 			m.put("status", ut.getStatus());
+			if(relation.contains(ut)) {
+				m.put("followed", "1");	
+			} else {
+				m.put("followed", "0");
+			}
 			uts.add(m);
 		}
 		result.put("userTags", uts);
+		return result;
+	}
+
+	private Set<UserTag> convert(List<UserRelation> relations) {
+		Set<UserTag> result = new HashSet<UserTag>();
+		for(UserRelation u : relations) {
+			result.add(u.getTargetUserTag());
+		}
 		return result;
 	}
 
@@ -275,7 +299,7 @@ public class UserService {
 		if(user == null || target == null) {
 			throw new APIException(400, "user not exist");
 		}
-		List<UserRelation> relations = userRelationRepository.findBySourceIdAndTargetId(userId, targetId);
+		List<UserRelation> relations = userRelationRepository.findBySourceIdAndTargetTagId(userId, targetId);
 		if("create".equals(action)) {
 			if(relations.isEmpty()) {
 				UserRelation ur = new UserRelation();
@@ -375,6 +399,37 @@ public class UserService {
 		String[] userIds = userId.split(",");
 		List<String> ids = Arrays.asList(userIds);
 		List<User> users = userRepository.findAll(ids);
+		for(User u : users) {
+			Map<String, String> map = new HashMap<String, String>();
+			map.put("id", u.getId());
+			map.put("nickName", u.getUsername());
+			map.put("image", u.getPicture());			
+			map.put("sex", u.getSex());
+			map.put("birthday", u.getBirthday());
+			map.put("city", u.getCity());
+			map.put("userTags", getUserTagsAsString(u));
+			result.add(map);
+		}
+		return result;
+	}
+	
+	public List<Map<String, String>> lookupUsersByNickname(String nickName) {
+		List<Map<String, String>> result = new ArrayList<Map<String, String>>();
+		if (nickName == null || "".equals(nickName)) {
+			throw new APIException(400, "bad request");
+		}
+		String[] nickNames = nickName.split(",");
+		final List<String> names = Arrays.asList(nickNames);
+		List<User> users = userRepository.findAll(new Specification<User>(){
+
+			@Override
+			public Predicate toPredicate(Root<User> root,
+					CriteriaQuery<?> query, CriteriaBuilder cb) {
+				Path<Object> nickName = root.get("username");
+				return nickName.in(names);
+			}
+			
+		});
 		for(User u : users) {
 			Map<String, String> map = new HashMap<String, String>();
 			map.put("id", u.getId());
