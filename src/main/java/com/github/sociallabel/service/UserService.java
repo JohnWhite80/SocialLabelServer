@@ -149,6 +149,7 @@ public class UserService {
 	public List<Map> recommend(String userId) {
 		List<Map> result = new ArrayList<Map>();				
 		User t = userRepository.findOne(userId);
+		Set<UserTag> relation = convert(t.getFollowing());
 		Set<UserTag> tags = t.getUserTags();
 		Iterator<UserTag> it = tags.iterator();
 		QPageRequest pageTag = new QPageRequest(0, 5);
@@ -171,6 +172,11 @@ public class UserService {
 						m.put("nickName", ut.getUser().getUsername());
 						m.put("image", ut.getUser().getPicture());
 						m.put("status", ut.getStatus());
+						if(relation.contains(ut)) {
+							m.put("followed", "1");	
+						} else {
+							m.put("followed", "0");
+						}
 						uts.add(m);
 					}
 					map.put("userTags", uts);
@@ -284,7 +290,7 @@ public class UserService {
 		return result;
 	}
 
-	private Set<UserTag> convert(List<UserRelation> relations) {
+	private Set<UserTag> convert(Collection<UserRelation> relations) {
 		Set<UserTag> result = new HashSet<UserTag>();
 		for(UserRelation u : relations) {
 			result.add(u.getTargetUserTag());
