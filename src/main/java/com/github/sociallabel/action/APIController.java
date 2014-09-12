@@ -121,9 +121,9 @@ public class APIController {
 	}
 	
 	@RequestMapping(value = "/recommend/{sessionId}", produces = MediaType.APPLICATION_JSON_VALUE)
-	public @ResponseBody ResponseEntity<Map<String, Object>> recommend(@PathVariable("sessionId") String sessionId){		
+	public @ResponseBody ResponseEntity<Map<String, Object>> recommend(@PathVariable("sessionId") String sessionId, @RequestParam(value = "page", required = false) Integer index){		
 		String userId = getUseridBySessionId(sessionId);
-		List<Map> recommend = userService.recommend(userId);		
+		List<Map> recommend = userService.recommend(userId, index);		
 		Map<String, Object> result = new HashMap<String, Object>();
 		result.put("code", "200");
 		result.put("message", "ok");

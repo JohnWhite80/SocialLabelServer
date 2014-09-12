@@ -10,12 +10,16 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
+import javax.persistence.Tuple;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.JoinType;
 import javax.persistence.criteria.Path;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
+import javax.persistence.criteria.SetJoin;
 
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,6 +32,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.github.sociallabel.APIException;
 import com.github.sociallabel.entity.Tag;
+import com.github.sociallabel.entity.Tag_;
 import com.github.sociallabel.entity.User;
 import com.github.sociallabel.entity.UserRelation;
 import com.github.sociallabel.entity.UserTag;
@@ -54,6 +59,11 @@ public class UserService {
 	private UserRelationRepository userRelationRepository;
 	@Autowired
 	private UserTagSubjectRepository userTagSubjectRepository;
+	@Autowired
+	private TupleRepository tupleRepository;
+	
+	private ConcurrentHashMap<String, Set<String>> recommendedMap = new ConcurrentHashMap<String, Set<String>>();
+	
 
 	@Transactional
 	public User addUser(User u) {
@@ -146,25 +156,66 @@ public class UserService {
 		}
 	}
 	
-	public List<Map> recommend(String userId) {
-		List<Map> result = new ArrayList<Map>();				
-		User t = userRepository.findOne(userId);
-		Set<UserTag> relation = convert(t.getFollowing());
-		Set<UserTag> tags = t.getUserTags();
-		Iterator<UserTag> it = tags.iterator();
-		QPageRequest pageTag = new QPageRequest(0, 5);
+	public List<Map> recommend(String userId, Integer page) {
+		List<Map> result = new ArrayList<Map>();			
 		QPageRequest pageUserTag = new QPageRequest(0, 2);
-		while (it.hasNext()) {
-			UserTag rt = it.next();
-			String name = rt.getTag().getName();
-			List<Tag> names = tagRepository.findByNameLikeOrderByNameDesc(name, pageTag);
-			for(Tag tag: names) {
-				List<UserTag> userTags = userTagRepository.findByTagId(tag.getId(), pageUserTag);
-				if(!userTags.isEmpty()) {
-					Map map  = new HashMap();
+		if (page == null || page < 0) {
+			User t = userRepository.findOne(userId);
+			Set<UserTag> relation = convert(t.getFollowing());
+			Set<UserTag> tags = t.getUserTags();
+			Iterator<UserTag> it = tags.iterator();
+			QPageRequest pageTag = new QPageRequest(0, 5);				
+			Set<String> tagIds = new HashSet<String>();  
+			while (it.hasNext()) {
+				UserTag rt = it.next();
+				String name = rt.getTag().getName();
+				List<Tag> names = tagRepository.findByNameLikeOrderByNameDesc(
+						name, pageTag);
+				for (Tag tag : names) {
+					List<UserTag> userTags = userTagRepository.findByTagId(
+							tag.getId(), pageUserTag);
+					if (!userTags.isEmpty()) {
+						Map map = new HashMap();
+						map.put("name", tag.getName());
+						tagIds.add(tag.getId());
+						List uts = new ArrayList();
+						for (UserTag ut : userTags) {
+							Map m = new HashMap();
+							m.put("id", ut.getId());
+							m.put("name", ut.getSubject());
+							m.put("userId", ut.getUser().getId());
+							m.put("nickName", ut.getUser().getUsername());
+							m.put("image", ut.getUser().getPicture());
+							m.put("status", ut.getStatus());
+							if (relation.contains(ut)) {
+								m.put("followed", "1");
+							} else {
+								m.put("followed", "0");
+							}
+							uts.add(m);
+						}
+						map.put("userTags", uts);
+						result.add(map);
+					}
+				}
+			}
+			recommendedMap.put(userId, tagIds);
+		} else {
+			User t = userRepository.findOne(userId);
+			Set<UserTag> relation = convert(t.getFollowing());
+			QPageRequest pageable = new QPageRequest(page.intValue(), 20);
+			Set<String> ids = recommendedMap.get(userId);
+			List<Tuple> tags = tupleRepository.findAllRecommendedUser(ids, pageable);			
+			for (Tuple tuple : tags) {
+				Tag tag = (Tag) tuple.get(0);
+				if(ids != null && ids.contains(tag.getId())) break;
+				List<UserTag> userTags = userTagRepository.findByTagId(
+						tag.getId(), pageUserTag);
+				if (!userTags.isEmpty()) {
+					Map map = new HashMap();
 					map.put("name", tag.getName());
 					List uts = new ArrayList();
-					for(UserTag ut : userTags){
+					for (UserTag ut : userTags) {
 						Map m = new HashMap();
 						m.put("id", ut.getId());
 						m.put("name", ut.getSubject());
@@ -172,8 +223,8 @@ public class UserService {
 						m.put("nickName", ut.getUser().getUsername());
 						m.put("image", ut.getUser().getPicture());
 						m.put("status", ut.getStatus());
-						if(relation.contains(ut)) {
-							m.put("followed", "1");	
+						if (relation.contains(ut)) {
+							m.put("followed", "1");
 						} else {
 							m.put("followed", "0");
 						}
@@ -181,8 +232,8 @@ public class UserService {
 					}
 					map.put("userTags", uts);
 					result.add(map);
-				}				
-			}			
+				}
+			}
 		}
 		return result;
 	}
