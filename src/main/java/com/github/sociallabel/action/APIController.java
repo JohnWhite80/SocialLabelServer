@@ -70,6 +70,14 @@ public class APIController {
 		return new ResponseEntity<Map<String, String>>(result, HttpStatus.OK);
 	}
 	
+	@RequestMapping(value = "/password/{sessionId}", produces = MediaType.APPLICATION_JSON_VALUE)
+	public @ResponseBody ResponseEntity<Map<String, String>> password(@PathVariable("sessionId") String sessionId, @RequestParam("oldPassword") String oldPassword, @RequestParam("password") String password){
+		String userId = getUseridBySessionId(sessionId);
+		userService.updatePassword(userId, oldPassword, password);
+		Map<String, String> result = new HashMap<String, String>();
+		return new ResponseEntity<Map<String, String>>(result, HttpStatus.OK);
+	}
+	
 	@RequestMapping(value = "/internalLogin", produces = MediaType.APPLICATION_JSON_VALUE)
 	public @ResponseBody ResponseEntity<Map<String, String>> internalLogin(@RequestParam("userId") String userId, @RequestParam("password") String password){
 		User user = userService.validateByUserId(userId, password);
@@ -194,10 +202,10 @@ public class APIController {
 		return new ResponseEntity<Map<String, String>>(result, HttpStatus.OK);
 	}
 	
-	@RequestMapping(value = "/firends/{sessionId}", produces = MediaType.APPLICATION_JSON_VALUE)
+	@RequestMapping(value = "/friends/{sessionId}", produces = MediaType.APPLICATION_JSON_VALUE)
 	public @ResponseBody ResponseEntity<Map<String, Object>> friends(@PathVariable("sessionId") String sessionId, @RequestParam("userId") String userId){
 		getUseridBySessionId(sessionId);
-		List<Map<String, String>> firends = userService.firends(userId);
+		List<Map<String, String>> firends = userService.friends(userId);
 		Map<String, Object> result = new HashMap<String, Object>();
 		result.put("code", "200");
 		result.put("message", "ok");

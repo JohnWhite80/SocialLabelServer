@@ -373,7 +373,7 @@ public class UserService {
 		}
 	}
 
-	public List<Map<String, String>> firends(String userId) {
+	public List<Map<String, String>> friends(String userId) {
 		List<Map<String, String>> result = new ArrayList<Map<String, String>>();
 		User user = userRepository.findOne(userId);
 		if (user == null) {
@@ -382,10 +382,16 @@ public class UserService {
 		Set<UserRelation> friends = user.getFollowing();
 		for(UserRelation u : friends) {
 			Map<String, String> map = new HashMap<String, String>();
-			User taget = u.getTargetUserTag().getUser();
+			UserTag ut = u.getTargetUserTag();
+			User taget = ut.getUser();			
+			map.put("id", ut.getId());			
+			map.put("name", ut.getSubject());
+			map.put("tagName", ut.getTag().getName());
 			map.put("userId", taget.getId());
 			map.put("nickName", taget.getUsername());
 			map.put("image", taget.getPicture());
+			map.put("status", ut.getStatus());
+			map.put("peopleNumbers", String.valueOf(ut.getPeopleNumbers()));			
 			result.add(map);
 		}
 		return result;
@@ -533,5 +539,22 @@ public class UserService {
 		}
 		result.put("historySubjects", uts);
 		return result;
+	}
+
+	@Transactional
+	public void updatePassword(String userId, String oldPassword,
+			String password) {
+		User user = userRepository.findOne(userId);
+		if (user == null) {
+			throw new APIException(400, "user not exist");
+		}
+		if(oldPassword == null || password == null) {
+			throw new APIException(400, "password required");
+		}
+		if(!user.getPassword().equals(oldPassword)) {
+			throw new APIException(400, "old password does not match");
+		}
+	    user.setPassword(SecurityUtil.encrypt(password));
+		userRepository.saveAndFlush(user);
 	}
 }
