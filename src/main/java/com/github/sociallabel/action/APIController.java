@@ -128,6 +128,16 @@ public class APIController {
 		return new ResponseEntity<Map<String, String>>(result, HttpStatus.OK);
 	}
 	
+	@RequestMapping(value = "/deleteTag/{sessionId}", produces = MediaType.APPLICATION_JSON_VALUE)
+	public @ResponseBody ResponseEntity<Map<String, String>> deleteTag(@PathVariable("sessionId") String sessionId, @RequestParam("tagName") String tagName){
+		String userId = getUseridBySessionId(sessionId);
+		userService.deleteUserTag(userId, tagName);
+		Map<String, String> result = new HashMap<String, String>();
+		result.put("code", "200");
+		result.put("message", "ok");
+		return new ResponseEntity<Map<String, String>>(result, HttpStatus.OK);
+	} 
+	
 	@RequestMapping(value = "/recommend/{sessionId}", produces = MediaType.APPLICATION_JSON_VALUE)
 	public @ResponseBody ResponseEntity<Map<String, Object>> recommend(@PathVariable("sessionId") String sessionId, @RequestParam(value = "page", required = false) Integer index){		
 		String userId = getUseridBySessionId(sessionId);
@@ -150,10 +160,21 @@ public class APIController {
 		return new ResponseEntity<Map<String, Object>>(result, HttpStatus.OK);
 	}
 	
-	@RequestMapping(value = "/profile/{sessionId}", method = RequestMethod.POST,  produces = MediaType.APPLICATION_JSON_VALUE)
-	public @ResponseBody ResponseEntity<Map<String, String>> profileUpdate(@PathVariable("sessionId") String sessionId, @RequestParam("filename") String filename, @RequestPart("image") MultipartFile file,@RequestParam("birthday") String birthday,@RequestParam("sex") String sex,@RequestParam("city") String city) throws Exception {
+	@RequestMapping(value = "/searchUsers/{sessionId}/{name}", produces = MediaType.APPLICATION_JSON_VALUE)
+	public @ResponseBody ResponseEntity<Map<String, Object>> searchUsers(@PathVariable("sessionId") String sessionId, @PathVariable("name") String name){
 		String userId = getUseridBySessionId(sessionId);
-		userService.updateProfile(userId, birthday, city, sex, filename, file);		
+		List<Map<String, String>> users = userService.searchUsers(name);
+		Map<String, Object> result = new HashMap<String, Object>();
+		result.put("code", "200");
+		result.put("message", "ok");
+		result.put("result", users);
+		return new ResponseEntity<Map<String, Object>>(result, HttpStatus.OK);
+	}
+	
+	@RequestMapping(value = "/profile/{sessionId}", method = RequestMethod.POST,  produces = MediaType.APPLICATION_JSON_VALUE)
+	public @ResponseBody ResponseEntity<Map<String, String>> profileUpdate(@PathVariable("sessionId") String sessionId, @RequestParam("filename") String filename, @RequestParam(value = "nickName", required = false) String nickName, @RequestPart("image") MultipartFile file,@RequestParam("birthday") String birthday,@RequestParam("sex") String sex,@RequestParam("city") String city) throws Exception {
+		String userId = getUseridBySessionId(sessionId);
+		userService.updateProfile(userId, nickName, birthday, city, sex, filename, file);		
 		Map<String, String> result = new HashMap<String, String>();
 		result.put("code", "200");
 		result.put("message", "ok");
@@ -239,6 +260,17 @@ public class APIController {
 	public @ResponseBody ResponseEntity<Map<String, Object>> lookupUsersByNickname(@PathVariable("sessionId") String sessionId, @RequestParam("nickName") String nickName){
 		getUseridBySessionId(sessionId);
 		List<Map<String, String>> users = userService.lookupUsersByNickname(nickName);
+		Map<String, Object> result = new HashMap<String, Object>();
+		result.put("code", "200");
+		result.put("message", "ok");
+		result.put("result", users);
+		return new ResponseEntity<Map<String, Object>>(result, HttpStatus.OK);
+	}
+	
+	@RequestMapping(value = "/lookupUsersByTagName/{sessionId}", produces = MediaType.APPLICATION_JSON_VALUE)
+	public @ResponseBody ResponseEntity<Map<String, Object>> lookupUsersByTagName(@PathVariable("sessionId") String sessionId, @RequestParam("tagName") String tagName){
+		getUseridBySessionId(sessionId);
+		List<Map<String, String>> users = userService.lookupUsersByTagName(tagName);
 		Map<String, Object> result = new HashMap<String, Object>();
 		result.put("code", "200");
 		result.put("message", "ok");

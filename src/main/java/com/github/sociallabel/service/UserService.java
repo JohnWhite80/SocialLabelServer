@@ -90,7 +90,7 @@ public class UserService {
 	}
 
 	@Transactional
-	public void updateProfile(String userId, String birthday, String city, String sex, String filename, MultipartFile file)
+	public void updateProfile(String userId, String nickName, String birthday, String city, String sex, String filename, MultipartFile file)
 			throws Exception {
 		User user = userRepository.findOne(userId);
 		if (user == null) {
@@ -102,9 +102,18 @@ public class UserService {
 				+ "." + ext);
 		file.transferTo(f);		
 		user.setPicture(f.getName());
-		user.setBirthday(birthday);
-		user.setCity(city);
-		user.setSex(sex);
+		if (StringUtils.isNotEmpty(nickName)) {
+			user.setUsername(nickName);	
+		}
+		if (StringUtils.isNotEmpty(birthday)) {
+			user.setBirthday(birthday);
+		}
+		if (StringUtils.isNotEmpty(city)) {
+		    user.setCity(city);
+		}
+		if (StringUtils.isNotEmpty(sex)) {
+			user.setSex(sex);	
+		}	
 		userRepository.saveAndFlush(user);
 	}
 
@@ -155,6 +164,22 @@ public class UserService {
 			}
 		}
 	}
+	
+	@Transactional
+	public void deleteUserTag(String userId, String tagName) {
+		User user = userRepository.findOne(userId);
+		if (user == null) {
+			throw new APIException(400, "user not exist");
+		}
+		Set<UserTag> userTags = user.getUserTags();
+		if(userTags != null) {
+			for(UserTag ut: userTags) {
+				if(ut.getTag().getName().equals(tagName)) {
+					userTagRepository.delete(ut);
+				}
+			}
+		}	
+	}	
 	
 	public List<Map> recommend(String userId, Integer page) {
 		List<Map> result = new ArrayList<Map>();			
@@ -262,6 +287,26 @@ public class UserService {
 				map.put("userTags", uts);
 				result.add(map);	
 			}				
+		}
+		return result;
+	}
+	
+	public List<Map<String, String>> searchUsers(String name) {
+		List<Map<String, String>> result = new ArrayList<Map<String, String>>();
+		if (name == null || "".equals(name)) {
+			throw new APIException(400, "bad request");
+		}
+		List<User> users = userRepository.findByNameContaining(name);
+		for(User u : users) {
+			Map<String, String> map = new HashMap<String, String>();
+			map.put("id", u.getId());
+			map.put("nickName", u.getUsername());
+			map.put("image", u.getPicture());			
+			map.put("sex", u.getSex());
+			map.put("birthday", u.getBirthday());
+			map.put("city", u.getCity());
+			map.put("userTags", getUserTagsAsString(u));
+			result.add(map);
 		}
 		return result;
 	}
@@ -506,6 +551,33 @@ public class UserService {
 		}
 		return result;
 	}
+	
+	public List<Map<String, String>> lookupUsersByTagName(String tagName) {
+		List<Map<String, String>> result = new ArrayList<Map<String, String>>();
+		if (tagName == null || "".equals(tagName)) {
+			throw new APIException(400, "bad request");
+		}
+		List<Tag> tags = tagRepository.findByName(tagName);		
+		if(tags != null) {
+			for(Tag t : tags) {
+				Set<UserTag> userTags = t.getUserTags();
+				for(UserTag ut : userTags) {
+					User u = ut.getUser();
+					Map<String, String> map = new HashMap<String, String>();
+					map.put("id", u.getId());
+					map.put("nickName", u.getUsername());
+					map.put("image", u.getPicture());			
+					map.put("sex", u.getSex());
+					map.put("birthday", u.getBirthday());
+					map.put("city", u.getCity());
+					map.put("userTags", getUserTagsAsString(u));
+					result.add(map);
+				}
+			}
+		}
+
+		return result;
+	}
 
 	private String getUserTagsAsString(User u) {
 		List<String> tags = new ArrayList<String>();
@@ -557,4 +629,5 @@ public class UserService {
 	    user.setPassword(SecurityUtil.encrypt(password));
 		userRepository.saveAndFlush(user);
 	}
+
 }
