@@ -13,8 +13,9 @@ import org.springframework.orm.jpa.support.OpenEntityManagerInViewFilter;
 import org.springframework.web.WebApplicationInitializer;
 import org.springframework.web.context.ContextLoaderListener;
 import org.springframework.web.context.support.AnnotationConfigWebApplicationContext;
-import org.springframework.web.filter.CharacterEncodingFilter;
 import org.springframework.web.servlet.DispatcherServlet;
+
+import com.github.sociallabel.filter.CharacterEncodingFilter;
 
 public class WebAppInitializer implements WebApplicationInitializer {
 
@@ -43,7 +44,7 @@ public class WebAppInitializer implements WebApplicationInitializer {
 		cfilter.setServletContext(container);
 		
 		filterRegistration = container.addFilter("characterEncodingFilter", cfilter);
-		filterRegistration.addMappingForServletNames(EnumSet.of(DispatcherType.REQUEST, DispatcherType.FORWARD), false, "dispatcher");
+		filterRegistration.addMappingForServletNames(null, false, "dispatcher");
 		
 		ServletRegistration.Dynamic registration = container.addServlet("dispatcher", dispatcherServlet);
 		File tempdir = (File) container.getAttribute("javax.servlet.context.tempdir");

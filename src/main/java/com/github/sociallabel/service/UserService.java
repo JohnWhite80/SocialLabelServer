@@ -4,6 +4,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -15,11 +16,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import javax.persistence.Tuple;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
-import javax.persistence.criteria.JoinType;
 import javax.persistence.criteria.Path;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
-import javax.persistence.criteria.SetJoin;
 
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,12 +30,15 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.github.sociallabel.APIException;
+import com.github.sociallabel.entity.Client;
+import com.github.sociallabel.entity.Issue;
 import com.github.sociallabel.entity.Tag;
-import com.github.sociallabel.entity.Tag_;
 import com.github.sociallabel.entity.User;
 import com.github.sociallabel.entity.UserRelation;
 import com.github.sociallabel.entity.UserTag;
 import com.github.sociallabel.entity.UserTagSubject;
+import com.github.sociallabel.repository.ClientRepository;
+import com.github.sociallabel.repository.IssueRepository;
 import com.github.sociallabel.repository.TagRepository;
 import com.github.sociallabel.repository.UserRelationRepository;
 import com.github.sociallabel.repository.UserRepository;
@@ -48,7 +50,13 @@ import com.github.sociallabel.util.SecurityUtil;
 public class UserService {
 
 	private @Value("${app.image.store.path}")
-	String path;
+	String imgPath;
+	private @Value("${app.client.store.path}")
+	String clientPath;
+	@Autowired
+	private IssueRepository issueRepository;
+	@Autowired
+	private ClientRepository clientRepository;
 	@Autowired
 	private UserRepository userRepository;
 	@Autowired
@@ -61,6 +69,8 @@ public class UserService {
 	private UserTagSubjectRepository userTagSubjectRepository;
 	@Autowired
 	private TupleRepository tupleRepository;
+	@Autowired
+	private JPushService jpushService;
 	
 	private ConcurrentHashMap<String, Set<String>> recommendedMap = new ConcurrentHashMap<String, Set<String>>();
 	
@@ -98,7 +108,7 @@ public class UserService {
 		}
 		String ext = filename.substring(filename.indexOf(".") + 1,
 				filename.length());
-		File f = new File(path + File.separator + System.currentTimeMillis()
+		File f = new File(imgPath + File.separator + System.currentTimeMillis()
 				+ "." + ext);
 		file.transferTo(f);		
 		user.setPicture(f.getName());
@@ -312,11 +322,44 @@ public class UserService {
 	}
 
 	public File getImage(String filename) {
-		File f = new File(path + File.separator + filename);
+		File f = new File(imgPath + File.separator + filename);
 		if(!f.exists()) {
 			throw new APIException(404, "file not found");
 		}
 		return f;
+	}
+	
+
+	public File getCurrentClientFile() {
+		Client client = getCurrentClient();
+		return new File(clientPath + File.separator + client.getPath());
+	}
+	
+	private Client getCurrentClient() {
+		List<Client> clients = clientRepository.findCurrentClient();
+		if(clients == null || clients.isEmpty()) {
+			throw new APIException(404, "file not found");
+		}
+		return clients.get(0);
+	}
+	
+	public Client getClientByClient(String version) {
+		Client client = null;
+		if(!StringUtils.isEmpty(version)) {
+			List<Client> clients = clientRepository.findByVersion(version);
+			if (clients.isEmpty()) {
+				client = getCurrentClient();
+			} else {
+				client = clients.get(0);
+				if(client.getParent() != null) {
+					client = client.getParent();
+				}
+			}
+		}
+		if(client == null) {
+			throw new APIException(404, "file not found");
+		}
+		return client;
 	}
 
 	public UserTag findUserTagById(String id) {
@@ -331,7 +374,8 @@ public class UserService {
 	public UserTag setUserTagStatus(String id, String userId, String status, String subject) {
 		UserTag result = userTagRepository.findOne(id);
 		if( result != null) {
-			if(!result.getUser().getId().equals(userId)) {
+			User user = result.getUser();
+			if(!user.getId().equals(userId)) {
 				throw new APIException(400, "permission denied");		
 			}
 			if(subject != null && !"".equals(subject)) {
@@ -344,6 +388,18 @@ public class UserService {
 			}
 			result.setStatus(status);
 			userTagRepository.save(result);
+			if("1".equals(subject)) {
+				//push notifications
+				Set<UserRelation> followers = result.getFollowers();
+				if(!followers.isEmpty()){
+					String[] ids = new String[followers.size()];
+					int i = 0;
+					for(UserRelation ur: followers) {
+						ids[i++] = ur.getSourceUser().getId();
+					}
+					jpushService.pushNotification(user.getUsername() + " is online", user.getId(), ids);
+				}
+			}
 			return result;
 		}
 		throw new APIException(400, "invalid userTag");
@@ -628,6 +684,15 @@ public class UserService {
 		}
 	    user.setPassword(SecurityUtil.encrypt(password));
 		userRepository.saveAndFlush(user);
+	}
+
+	@Transactional
+	public Issue createIssue(Issue i) {
+		if (i.getTitle() == null || i.getDescription() == null) {
+			throw new APIException(400, "bad request");
+		}		
+		i.setCreateTime(new Date());
+		return issueRepository.save(i);
 	}
 
 }

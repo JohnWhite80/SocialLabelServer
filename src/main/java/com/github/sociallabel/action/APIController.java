@@ -27,6 +27,8 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.github.sociallabel.APIException;
+import com.github.sociallabel.entity.Client;
+import com.github.sociallabel.entity.Issue;
 import com.github.sociallabel.entity.Tag;
 import com.github.sociallabel.entity.User;
 import com.github.sociallabel.entity.UserTag;
@@ -54,6 +56,16 @@ public class APIController {
 		result.put("message", "ok");
 		result.put("userId", userId);
 		result.put("sessionId", putUserIdToSession(userId));
+		return new ResponseEntity<Map<String, String>>(result, HttpStatus.OK);
+	}
+	
+	@RequestMapping(value = "/version/{version}", produces = MediaType.APPLICATION_JSON_VALUE)	
+	public @ResponseBody ResponseEntity<Map<String, String>> version(@PathVariable("version") String version) {
+		Client c = userService.getClientByClient(version);
+		Map<String, String> result = new HashMap<String, String>();
+		result.put("code", "200");
+		result.put("message", "ok");
+		result.put("version", c.getVersion());
 		return new ResponseEntity<Map<String, String>>(result, HttpStatus.OK);
 	}
 	
@@ -281,6 +293,16 @@ public class APIController {
 	@RequestMapping(value = "/image/{filename:.+}", method = RequestMethod.GET)
 	public @ResponseBody FileSystemResource image(@PathVariable String filename) throws Exception {
 		return new FileSystemResource(userService.getImage(filename)); 
+	}
+	
+	@RequestMapping(value = "/issue", produces = MediaType.APPLICATION_JSON_VALUE)	
+	public @ResponseBody ResponseEntity<Map<String, Object>> issue(@RequestBody Issue issue) {
+		Issue i = userService.createIssue(issue);
+		Map<String, Object> result = new HashMap<String, Object>();
+		result.put("code", "200");
+		result.put("message", "ok");
+		result.put("result", i);
+		return new ResponseEntity<Map<String, Object>>(result, HttpStatus.OK);
 	}
 	
 	private String putUserIdToSession(String userId){
