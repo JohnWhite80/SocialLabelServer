@@ -14,6 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
@@ -58,4 +59,14 @@ public class HomeController extends AbsController {
 		return new FileSystemResource(client); 
 	}
 	
+	
+	@RequestMapping(value = "/ota/{version}", method = RequestMethod.GET)
+	public @ResponseBody FileSystemResource otaByVersion(@PathVariable("version") String version, HttpServletRequest request, HttpServletResponse response) throws Exception {
+		File client = userService.getClientFileByVersion(version);
+		response.setContentType("application/octet-stream");
+		String headerKey = "Content-Disposition";
+        String headerValue = String.format("attachment; filename=\"%s\"", client.getName());
+        response.setHeader(headerKey, headerValue);
+		return new FileSystemResource(client); 
+	}
 }

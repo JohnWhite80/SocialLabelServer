@@ -329,6 +329,10 @@ public class UserService {
 		return f;
 	}
 	
+	public File getClientFileByVersion(String version) {
+		Client client = getClientByClient(version);
+		return new File(clientPath + File.separator + client.getPath());
+	}
 
 	public File getCurrentClientFile() {
 		Client client = getCurrentClient();

@@ -87,6 +87,8 @@ public class APIController {
 		String userId = getUseridBySessionId(sessionId);
 		userService.updatePassword(userId, oldPassword, password);
 		Map<String, String> result = new HashMap<String, String>();
+		result.put("code", "200");
+		result.put("message", "ok");
 		return new ResponseEntity<Map<String, String>>(result, HttpStatus.OK);
 	}
 	
@@ -301,7 +303,7 @@ public class APIController {
 		Map<String, Object> result = new HashMap<String, Object>();
 		result.put("code", "200");
 		result.put("message", "ok");
-		result.put("result", i);
+		result.put("issueId", i.getId());
 		return new ResponseEntity<Map<String, Object>>(result, HttpStatus.OK);
 	}
 	
