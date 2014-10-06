@@ -4,6 +4,8 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -267,6 +269,126 @@ public class UserService {
 					}
 					map.put("userTags", uts);
 					result.add(map);
+				}
+			}
+		}
+		return result;
+	}
+	
+	public List<Map> recommendInMemory(String userId, Integer page) {
+		List<Map> result = new ArrayList<Map>();
+		User u = userRepository.findOne(userId);
+		Set<UserTag> relation = convert(u.getFollowing());
+		QPageRequest pageUserTag = new QPageRequest(0, 10);
+		List<Tag> tags = findRecommendTags(u, page);
+		for (Tag tag : tags) {
+			List<UserTag> userTags = userTagRepository.findByTagId(
+					tag.getId(), pageUserTag);
+			if (!userTags.isEmpty()) {
+				Map map = new HashMap();
+				map.put("name", tag.getName());
+				List uts = new ArrayList();
+				for (UserTag ut : userTags) {
+					Map m = new HashMap();
+					m.put("id", ut.getId());
+					m.put("name", ut.getSubject());
+					m.put("userId", ut.getUser().getId());
+					m.put("nickName", ut.getUser().getUsername());
+					m.put("image", ut.getUser().getPicture());
+					m.put("status", ut.getStatus());
+					if (relation.contains(ut)) {
+						m.put("followed", "1");
+					} else {
+						m.put("followed", "0");
+					}
+					uts.add(m);
+				}
+				map.put("userTags", uts);
+				result.add(map);
+			}
+		}
+		return result;
+	}
+	
+	public List<Tag> findRecommendTags(User u, Integer page){
+		List<Tag> result = new ArrayList<Tag>();
+		List<Tag> all = tagRepository.findAll();
+		Set<Tag> like = new HashSet<Tag>();
+		List<Tag> left = new ArrayList<Tag>();
+		
+		Set<UserTag> tags = u.getUserTags();
+		Iterator<UserTag> it = tags.iterator();
+		QPageRequest pageTag = new QPageRequest(0, 5);				  
+		while (it.hasNext()) {
+			UserTag rt = it.next();
+			String name = rt.getTag().getName();
+			List<Tag> names = tagRepository.findByNameLikeOrderByNameDesc(
+					name, pageTag);
+			for(Tag t:names){
+				if(like.size() < 10 && isValid(u, t)) {
+					like.add(t);
+				}
+			}
+		}
+		
+		for(Tag t:all){
+			if(!like.contains(t) && isValid(u, t)) {
+				left.add(t);
+			}
+		}		
+		
+		Collections.sort(left, new Comparator<Tag>(){
+
+			@Override
+			public int compare(Tag t1, Tag t2) {
+				int s1 = t1.getUserTags().size();
+				int s2 = t2.getUserTags().size();
+				return s2 - s1;
+			}
+			
+		});
+		
+		int defaultSize = 10;
+		int cPage = 0;
+		int lSize = like.size() > defaultSize ? defaultSize : like.size();
+		int total = left.size() + lSize;
+
+		if (page == null || page < 0) {
+			cPage = 0;
+			result.addAll(like);
+			if (result.size() < defaultSize) {
+				if (left.size() + result.size() >= defaultSize) {
+					result.addAll(left.subList(0, defaultSize - result.size()));
+				} else {
+					result.addAll(left);
+				}
+			} else {
+				result = result.subList(0, defaultSize);
+			}			
+		} else {
+			cPage = page + 1;
+			int start = cPage * defaultSize;
+			int end = (cPage+1) * defaultSize;
+			if(start <= total) {
+				if(end <= total){
+					result.addAll(left.subList(start-lSize, end-lSize));
+				} else {
+					result.addAll(left.subList(start-lSize, left.size()));
+				}
+			}
+		}
+				
+		return result;
+	}
+	
+	private boolean isValid(User u, Tag t) {
+		boolean result = false;
+		Set<UserTag> userTags = t.getUserTags();
+		if(!userTags.isEmpty()) {
+			for(UserTag ut: userTags) {				
+				if(!ut.getUser().equals(u) && "1".equals(ut.getStatus())){
+					result = true;
+					break;
 				}
 			}
 		}
