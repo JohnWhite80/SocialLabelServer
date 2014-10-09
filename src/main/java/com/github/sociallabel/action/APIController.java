@@ -283,8 +283,8 @@ public class APIController {
 	
 	@RequestMapping(value = "/lookupUsersByTagName/{sessionId}", produces = MediaType.APPLICATION_JSON_VALUE)
 	public @ResponseBody ResponseEntity<Map<String, Object>> lookupUsersByTagName(@PathVariable("sessionId") String sessionId, @RequestParam("tagName") String tagName){
-		getUseridBySessionId(sessionId);
-		List<Map<String, String>> users = userService.lookupUsersByTagName(tagName);
+		String userId = getUseridBySessionId(sessionId);
+		List<Map<String, String>> users = userService.lookupUsersByTagName(userId, tagName);
 		Map<String, Object> result = new HashMap<String, Object>();
 		result.put("code", "200");
 		result.put("message", "ok");

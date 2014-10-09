@@ -514,7 +514,7 @@ public class UserService {
 			}
 			result.setStatus(status);
 			userTagRepository.save(result);
-			if("1".equals(subject)) {
+			if("1".equals(status)) {
 				//push notifications
 				Set<UserRelation> followers = result.getFollowers();
 				if(!followers.isEmpty()){
@@ -734,26 +734,33 @@ public class UserService {
 		return result;
 	}
 	
-	public List<Map<String, String>> lookupUsersByTagName(String tagName) {
+	public List<Map<String, String>> lookupUsersByTagName(String userId, String tagName) {
 		List<Map<String, String>> result = new ArrayList<Map<String, String>>();
 		if (tagName == null || "".equals(tagName)) {
 			throw new APIException(400, "bad request");
 		}
+		User user = userRepository.findOne(userId);
+		Set<UserTag> relation = convert(user.getFollowing());
 		List<Tag> tags = tagRepository.findByName(tagName);		
 		if(tags != null) {
 			for(Tag t : tags) {
 				Set<UserTag> userTags = t.getUserTags();
 				for(UserTag ut : userTags) {
-					User u = ut.getUser();
-					Map<String, String> map = new HashMap<String, String>();
-					map.put("id", u.getId());
-					map.put("nickName", u.getUsername());
-					map.put("image", u.getPicture());			
-					map.put("sex", u.getSex());
-					map.put("birthday", u.getBirthday());
-					map.put("city", u.getCity());
-					map.put("userTags", getUserTagsAsString(u));
-					result.add(map);
+					User u = ut.getUser();					
+					Map<String, String> m = new HashMap<String, String>();
+					m.put("id", ut.getId());
+					m.put("name", ut.getSubject());
+					m.put("tagName", t.getName());
+					m.put("userId", u.getId());
+					m.put("nickName", u.getUsername());
+					m.put("image", u.getPicture());
+					m.put("status", ut.getStatus());
+					if (relation.contains(ut)) {
+						m.put("followed", "1");
+					} else {
+						m.put("followed", "0");
+					}
+					result.add(m);
 				}
 			}
 		}

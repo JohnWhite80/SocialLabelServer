@@ -35,7 +35,7 @@ public class WebConfig extends RepositoryRestMvcConfiguration {
 		ResourceBundleMessageSource messageSource = new ResourceBundleMessageSource();
 		messageSource.setBasename("messages");
 		return messageSource;
-	}
+	}	
 
 	@Override
 	public void addResourceHandlers(ResourceHandlerRegistry registry) {
