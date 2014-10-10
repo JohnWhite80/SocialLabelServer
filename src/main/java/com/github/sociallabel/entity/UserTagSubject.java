@@ -20,6 +20,7 @@ public class UserTagSubject {
 	@Id
 	@GenericGenerator(name="idGenerator", strategy="uuid")
 	@GeneratedValue(strategy = GenerationType.AUTO, generator = "idGenerator")
+	@JsonIgnore
 	private String id;
 	
 	@Column(length = 128, nullable = true)

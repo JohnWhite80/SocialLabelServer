@@ -795,10 +795,7 @@ public class UserService {
 		Set<UserTag> userTags = user.getUserTags();
 		List<String> uts = new ArrayList<String>();
 		Set<UserTagSubject> userTagSubjects = ut.getUserTagSubjects();
-		for(UserTagSubject s : userTagSubjects){			
-			uts.add(s.getSubject());
-		}
-		result.put("historySubjects", uts);
+		result.put("historySubjects", userTagSubjects);
 		return result;
 	}
 
