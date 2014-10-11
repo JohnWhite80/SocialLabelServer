@@ -12,7 +12,10 @@ import com.github.sociallabel.entity.UserTag;
 
 public interface UserTagRepository extends JpaRepository<UserTag, String>{
 	
-	@Query(" from UserTag t where t.tag.id = ?1 ")
+	@Query(" from UserTag t where t.tag.id = ?1")
 	List<UserTag> findByTagId(String tagId, Pageable page);
+	
+	@Query(" from UserTag t where t.tag.id = ?1 and t.status = ?2")
+	List<UserTag> findByTagIdAndStatus(String tagId, String status, Pageable page);
 	
 }

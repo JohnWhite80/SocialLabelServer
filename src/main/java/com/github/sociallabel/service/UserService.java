@@ -401,7 +401,7 @@ public class UserService {
 		QPageRequest pageUserTag = new QPageRequest(0, 2);
 		List<Tag> names = tagRepository.findByNameLikeOrderByNameDesc("%" + tagname + "%", pageTag);
 		for(Tag tag: names) {
-			List<UserTag> userTags = userTagRepository.findByTagId(tag.getId(), pageUserTag);
+			List<UserTag> userTags = userTagRepository.findByTagIdAndStatus(tag.getId(), "1", pageUserTag);
 			if(!userTags.isEmpty()) {
 				Map map = new HashMap();
 				map.put("name", tag.getName());
@@ -562,6 +562,8 @@ public class UserService {
 			} else {
 				m.put("followed", "0");
 			}
+			m.put("peopleNumbers", String.valueOf(ut.getPeopleNumbers()));
+			m.put("fanNumbers", String.valueOf(ut.getFollowers().size()));
 			uts.add(m);
 		}
 		result.put("userTags", uts);
@@ -618,7 +620,8 @@ public class UserService {
 			map.put("nickName", taget.getUsername());
 			map.put("image", taget.getPicture());
 			map.put("status", ut.getStatus());
-			map.put("peopleNumbers", String.valueOf(ut.getPeopleNumbers()));			
+			map.put("peopleNumbers", String.valueOf(ut.getPeopleNumbers()));	
+			map.put("fanNumbers", String.valueOf(ut.getFollowers().size()));
 			result.add(map);
 		}
 		return result;
